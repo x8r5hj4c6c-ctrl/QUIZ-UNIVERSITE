@@ -73,7 +73,7 @@ def load_progress() -> Optional[Dict]:
         return json.loads(DATA_FILE.read_text())
     return None
 
-# --- BASE DE DONNÉES ÉTENDUE ---
+# --- BASE DE DONNÉES ÉTENDUE (Questions inspirées des annales ARES) ---
 def init_database():
     """Initialise la base de données des questions"""
     return {
@@ -102,7 +102,12 @@ def init_database():
              "opts": ["Deux cellules filles identiques", "Quatre cellules haploïdes", "Deux gamètes", "Une cellule œuf"], 
              "ans": "Deux cellules filles identiques",
              "difficulty": "Facile",
-             "explanation": "La mitose est une division cellulaire produisant deux cellules filles génétiquement identiques."}
+             "explanation": "La mitose est une division cellulaire produisant deux cellules filles génétiquement identiques."},
+            {"q": "Qu'illustre le fait que les moustiques résistants aux insecticides prédominent dans les régions traitées ?",
+             "opts": ["Le créationnisme", "La macro-évolution", "La sélection naturelle", "La théorie de Lamarck"],
+             "ans": "La sélection naturelle",
+             "difficulty": "Moyen",
+             "explanation": "C'est un exemple classique de pression de sélection exercée par l'environnement (ici, l'insecticide) [citation:1]."}
         ],
         "Chimie": [
             {"q": "Quelle est la configuration électronique du Carbone (Z=6) ?", 
@@ -124,7 +129,12 @@ def init_database():
              "opts": ["La quantité de matière", "La masse", "Le volume", "La pression"], 
              "ans": "La quantité de matière",
              "difficulty": "Facile",
-             "explanation": "La mole mesure la quantité de matière (6,022 × 10²³ entités)."}
+             "explanation": "La mole mesure la quantité de matière (6,022 × 10²³ entités)."},
+            {"q": "Dans la réaction du permanganate de potassium avec l'iodure de potassium en milieu acide, combien de molécules d'eau faut-il ajouter pour équilibrer ?",
+             "opts": ["8 à droite", "4 à gauche", "8 à gauche", "Aucune"],
+             "ans": "8 à droite",
+             "difficulty": "Difficile",
+             "explanation": "La réaction d'oxydoréduction nécessite 8 H₂O pour équilibrer les oxygènes et hydrogènes en milieu acide [citation:1]."}
         ],
         "Physique": [
             {"q": "Un corps de 5 kg est soumis à une force de 20 N. Quelle est son accélération ?", 
@@ -141,7 +151,12 @@ def init_database():
              "opts": ["Newton", "Joule", "Watt", "Pascal"], 
              "ans": "Newton",
              "difficulty": "Facile",
-             "explanation": "Le Newton (N) est l'unité de force."}
+             "explanation": "Le Newton (N) est l'unité de force."},
+            {"q": "Quelle doit être la section d'un fil de résistivité 1,6.10⁻⁸ Ωm pour que sa résistance soit de 1Ω ? (longueur estimée à 20m)",
+             "opts": ["0,32 mm²", "3,2 mm²", "32 mm²", "320 mm²"],
+             "ans": "32 mm²",
+             "difficulty": "Difficile",
+             "explanation": "R = ρ*L/S => S = ρ*L/R. Le calcul nécessite de connaître la longueur du fil (ici, 200 spires de cadre mobile) [citation:1]."}
         ],
         "Mathématiques": [
             {"q": "Quelle est la dérivée de f(x) = x² ?", 
@@ -158,7 +173,34 @@ def init_database():
              "opts": ["2", "10", "1", "0"], 
              "ans": "2",
              "difficulty": "Facile",
-             "explanation": "10² = 100, donc log10(100) = 2"}
+             "explanation": "10² = 100, donc log10(100) = 2"},
+            {"q": "Dans un repère orthonormé, A(0;3), B(3;6), C(4;4). Que vaut le cosinus de l'angle ABC ?",
+             "opts": ["√6/6", "√8/8", "√10/10", "√12/12"],
+             "ans": "√10/10",
+             "difficulty": "Difficile",
+             "explanation": "Calcul vectoriel avec BA et BC. cos(θ) = (BA·BC) / (||BA|| * ||BC||) [citation:1]."}
+        ],
+        "Communication & Raisonnement": [
+            {"q": "Consultation : 'Bonjour Mme D., que puis-je faire pour vous aujourd'hui ?' Pourquoi cette phrase est-elle la plus adaptée ?",
+             "opts": ["Car elle est la plus rapide", "Car c'est une question ouverte qui laisse la patiente s'exprimer", "Car elle rappelle le motif de consultation", "Car elle impose le sujet de l'hypertension"],
+             "ans": "Car c'est une question ouverte qui laisse la patiente s'exprimer",
+             "difficulty": "Facile",
+             "explanation": "En médecine, une question ouverte permet de ne pas présupposer du motif de consultation [citation:1]."},
+            {"q": "Votre mère fumeuse dit en public avoir arrêté, ce qui est faux. Quelle est la réaction la plus appropriée ?",
+             "opts": ["Ne rien dire", "Faire de grands yeux réprobateurs", "En parler en privé après le dîner", "La reprendre ironiquement devant les invités"],
+             "ans": "En parler en privé après le dîner",
+             "difficulty": "Facile",
+             "explanation": "Il est préférable de ne pas humilier ou confronter un proche en public, mais d'aborder le sujet en privé [citation:1]."},
+            {"q": "Votre ami a mauvaise haleine. Vous devez :",
+             "opts": ["Lui faire la remarque poliment", "Lui proposer un chewing-gum sans rien dire", "Parler d'un autre problème dentaire", "Ne rien dire"],
+             "ans": "Lui faire la remarque poliment",
+             "difficulty": "Moyen",
+             "explanation": "L'honnêteté avec tact est souvent la meilleure approche pour un ami [citation:1]."},
+            {"q": "Face à une patiente nécessitant une opération urgente de l'aorte, quelle est l'attitude la plus empathique ?",
+             "opts": ["Appeler le bloc en sa présence", "Écouter ses inquiétudes tout en expliquant l'urgence", "Rester focalisé sur la maladie", "Lui conseiller de réfléchir et de rappeler"],
+             "ans": "Écouter ses inquiétudes tout en expliquant l'urgence",
+             "difficulty": "Moyen",
+             "explanation": "L'empathie consiste à reconnaître les émotions du patient tout en assurant sa prise en charge médicale [citation:1]."}
         ]
     }
 
@@ -201,11 +243,15 @@ def prepare_question():
         random.shuffle(opts)
         st.session_state.current_options = opts
 
-def calculate_percentage() -> float:
-    """Calcule le pourcentage de réussite"""
-    if len(st.session_state.quiz_data) > 0:
-        return (st.session_state.score / len(st.session_state.quiz_data)) * 100
-    return 0
+def calculate_score_ares() -> float:
+    """Calcule le score selon la méthode ARES (+1 pour une bonne réponse, -1/3 pour une erreur)"""
+    score = 0.0
+    for answer in st.session_state.answers_history:
+        if answer['is_correct']:
+            score += 1
+        else:
+            score -= 1/3
+    return score
 
 def get_feedback_message(percentage: float) -> str:
     """Retourne un message de feedback personnalisé"""
@@ -240,144 +286,4 @@ with st.sidebar:
     st.header("💾 Progression")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Sauvegarder", use_container_width=True):
-            if st.session_state.quiz_data and not st.session_state.finished:
-                save_progress()
-                st.success("✅ Progression sauvegardée !")
-            else:
-                st.warning("⚠️ Pas de quiz en cours")
-    with col2:
-        if st.button("Charger", use_container_width=True):
-            progress = load_progress()
-            if progress:
-                for key, value in progress.items():
-                    st.session_state[key] = value
-                st.success("✅ Progression chargée !")
-                st.rerun()
-            else:
-                st.warning("⚠️ Aucune sauvegarde trouvée")
-
-# Zone principale
-if not st.session_state.quiz_data or st.session_state.finished:
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        materia_scelta = st.selectbox(
-            "📚 Choisissez votre matière :", 
-            list(st.session_state.db_ares.keys())
-        )
-    
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        start_button = st.button(
-            "▶️ Commencer le Quiz", 
-            use_container_width=True,
-            type="primary"
-        )
-    
-    if start_button:
-        start_quiz(materia_scelta, st.session_state.num_questions)
-        st.rerun()
-    
-    # Statistiques des questions disponibles
-    st.markdown("---")
-    st.subheader("📊 Questions disponibles")
-    for materia, questions in st.session_state.db_ares.items():
-        st.write(f"**{materia}**: {len(questions)} questions")
-
-else:
-    idx = st.session_state.current_idx
-    q = st.session_state.quiz_data[idx]
-    
-    # En-tête du quiz
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        st.markdown(f"**{st.session_state.selected_materia}**")
-    with col2:
-        st.markdown(f"📊 **Score: {st.session_state.score}/{idx}**")
-    with col3:
-        if st.button("🏠 Menu", use_container_width=True):
-            st.session_state.quiz_data = []
-            st.session_state.finished = False
-            if DATA_FILE.exists():
-                DATA_FILE.unlink()
-            st.rerun()
-    
-    # Progression
-    progress_value = (idx + 1) / len(st.session_state.quiz_data)
-    st.progress(progress_value)
-    st.markdown(f"<p class='question-counter'>Question {idx + 1} sur {len(st.session_state.quiz_data)}</p>", 
-                unsafe_allow_html=True)
-    
-    # Question
-    st.markdown(f"### {q['q']}")
-    if 'difficulty' in q:
-        difficulty_color = {"Facile": "🟢", "Moyen": "🟡", "Difficile": "🔴"}.get(q['difficulty'], "")
-        st.caption(f"Difficulté: {difficulty_color} {q['difficulty']}")
-    
-    # Formulaire de réponse
-    with st.form(key=f"form_{idx}"):
-        user_choice = st.radio(
-            "✨ Sélectionnez votre réponse :", 
-            st.session_state.current_options,
-            key=f"radio_{idx}"
-        )
-        submit = st.form_submit_button("✅ Valider la réponse", use_container_width=True)
-    
-    if submit and not st.session_state.submitted:
-        st.session_state.submitted = True
-        is_correct = user_choice == q['ans']
-        
-        # Enregistrement de la réponse
-        st.session_state.answers_history.append({
-            'question': q['q'],
-            'user_answer': user_choice,
-            'correct_answer': q['ans'],
-            'is_correct': is_correct
-        })
-        
-        if is_correct:
-            st.session_state.score += 1
-            st.success("✅ Correct !")
-            if st.session_state.show_explanations and 'explanation' in q:
-                st.markdown(f"<div class='correct-answer'>💡 {q['explanation']}</div>", 
-                          unsafe_allow_html=True)
-        else:
-            st.error(f"❌ Incorrect. La réponse était : **{q['ans']}**")
-            if st.session_state.show_explanations and 'explanation' in q:
-                st.markdown(f"<div class='incorrect-answer'>💡 {q['explanation']}</div>", 
-                          unsafe_allow_html=True)
-    
-    # Navigation
-    if st.session_state.submitted:
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            if st.button("⬅️ Précédent", use_container_width=True) and idx > 0:
-                st.session_state.current_idx -= 1
-                st.session_state.submitted = False
-                prepare_question()
-                st.rerun()
-        with col2:
-            button_text = "Terminer 🏁" if idx + 1 >= len(st.session_state.quiz_data) else "Continuer ➡️"
-            if st.button(button_text, use_container_width=True, type="primary"):
-                if idx + 1 < len(st.session_state.quiz_data):
-                    st.session_state.current_idx += 1
-                    st.session_state.submitted = False
-                    prepare_question()
-                    st.rerun()
-                else:
-                    st.session_state.finished = True
-                    st.rerun()
-
-# --- ÉCRAN FINAL ---
-if st.session_state.finished:
-    st.balloons()
-    st.header("🏁 Résultats du Quiz")
-    
-    # Score principal
-    percentage = calculate_percentage()
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Score", f"{st.session_state.score}/{len(st.session_state.quiz_data)}")
-    with col2:
-        st.metric("Pourcentage", f"{percentage:.1f}%")
+        if st.button("Sauvegarder", use_container_width=True
