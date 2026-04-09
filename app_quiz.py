@@ -2,62 +2,84 @@ import streamlit as st
 import random
 
 # Configurazione Pagina
-st.set_page_config(page_title="Quizzeo ARES Pro", page_icon="🧬", layout="centered")
+st.set_page_config(page_title="Quizzeo ARES Elite", page_icon="⚖️", layout="centered")
 
-# --- DATABASE STRUTTURATO PER SOTTO-ARGOMENTI ---
-# Ogni materia ha un dizionario di categorie, ognuna con le sue domande.
+# --- DATABASE AVANZATO (Basato su ARES 2017-2022) ---
 DB_ARES = {
     "Biologie": {
-        "Cytologie": [{"q": "L'organite responsable de la synthèse protéique est :", "opts": ["Le ribosome", "Le lysosome", "Le nucléole", "Le centrosome"], "ans": "Le ribosome"}],
-        "Génétique": [{"q": "Le phénotype d'un individu dépend de :", "opts": ["L'interaction génotype-milieu", "Du génotype uniquement", "Du milieu uniquement", "De l'âge uniquement"], "ans": "L'interaction génotype-milieu"}],
-        "Métabolisme": [{"q": "La fermentation lactique produit :", "opts": ["De l'acide lactique et de l'ATP", "Du CO2 e de l'éthanol", "De l'oxygène", "Du glucose"], "ans": "De l'acide lactique et de l'ATP"}],
-        "Physiologie": [{"q": "Quelle hormone augmente la réabsorption d'eau par le rein ?", "opts": ["L'ADH (Vasopressine)", "L'insuline", "L'adrénaline", "La thyroxine"], "ans": "L'ADH (Vasopressine)"}],
-        "Division Cellulaire": [{"q": "À quelle étape les chromosomes se condensent-ils ?", "opts": ["Prophase", "Métaphase", "Anaphase", "Télophase"], "ans": "Prophase"}],
-        "Biochimie": [{"q": "Une liaison peptidique unit deux :", "opts": ["Acides aminés", "Nucléotides", "Acides gras", "Glucides"], "ans": "Acides aminés"}],
-        "Évolution": [{"q": "La sélection naturelle favorise :", "opts": ["L'adaptation au milieu", "La mutation aléatoire", "La disparition des espèces", "Le clonage"], "ans": "L'adaptation au milieu"}],
-        "Histologie": [{"q": "Le tissu épithélial a pour rôle :", "opts": ["Le revêtement et la protection", "La contraction", "La transmission nerveuse", "Le soutien mécanique"], "ans": "Le revêtement et la protection"}],
-        "Immunologie": [{"q": "Les lymphocytes B sont responsables de :", "opts": ["L'immunité humorale", "La phagocytose", "L'immunité cellulaire", "La coagulation"], "ans": "L'immunité humorale"}],
-        "Botanique": [{"q": "La sève brute circule dans :", "opts": ["Le xylème", "Le phloème", "Le parenchyme", "L'épiderme"], "ans": "Le xylème"}]
+        "Cytologie": [
+            {"q": "Quelle est la séquence correcte de la synthèse et de l'exportation d'une protéine ?", "opts": ["Nucléole -> RER -> Appareil de Golgi -> Vésicule de sécrétion", "Noyau -> Ribosome libre -> Lysosome -> Membrane", "RER -> Appareil de Golgi -> Mitochondrie -> Cytosol", "Noyau -> Peroxysome -> Réticulum -> Appareil de Golgi"], "ans": "Nucléole -> RER -> Appareil de Golgi -> Vésicule de sécrétion"},
+            {"q": "Quel organite possède une double membrane et des ribosomes 70S ?", "opts": ["La mitochondrie", "L'appareil de Golgi", "Le réticulum endoplasmique lisse", "Le lysosome"], "ans": "La mitochondrie"}
+        ],
+        "Génétique Moleculaire": [
+            {"q": "Si un brin d'ADN a la séquence 5'-ATGCG-3', quel est l'ARNm transcrit ?", "opts": ["5'-AUGCG-3'", "5'-UACGC-3'", "3'-UACGC-5'", "5'-TACGC-3'"], "ans": "3'-UACGC-5'"},
+            {"q": "L'expérience di Hershey et Chase a prouvé che :", "opts": ["L'ADN est le support de l'hérédité", "Les protéines portent le code génétique", "L'ARN est monocaténaire", "La réplication est semi-conservative"], "ans": "L'ADN est le support de l'hérédité"}
+        ],
+        "Biochimie": [
+            {"q": "Combien de liaisons hydrogène lient une paire de bases G-C ?", "opts": ["3", "2", "1", "4"], "ans": "3"},
+            {"q": "L'hydrolyse complète de l'amidon produit du :", "opts": ["Glucose", "Fructose", "Galactose", "Maltose"], "ans": "Glucose"}
+        ],
+        "Physiologie Cardiaque": [
+            {"q": "Le noeud sinusal est situé dans :", "opts": ["L'oreillette droite", "L'oreillette gauche", "Le ventricule droit", "Le septum"], "ans": "L'oreillette droite"}
+        ],
+        "Metabolisme": [
+            {"q": "Quel est le bilan net en ATP d'une molécule de glucose subissant uniquement la glycolyse ?", "opts": ["2 ATP", "4 ATP", "36 ATP", "0 ATP"], "ans": "2 ATP"}
+        ],
+        "Hérédité Mendélienne": [
+            {"q": "Croisement de deux hétérozygotes (Aa x Aa). Probabilité d'avoir un descendant homozygote récessif ?", "opts": ["25%", "50%", "75%", "100%"], "ans": "25%"}
+        ],
+        "Histologie": [{"q": "Le tissu conjonctif se caractérise par :", "opts": ["Une matrice extracellulaire abondante", "Des cellules jointives", "L'absence de vaisseaux", "La capacité de contraction"], "ans": "Une matrice extracellulaire abondante"}],
+        "Immunologie": [{"q": "Les anticorps sont produits par :", "opts": ["Les plasmocytes", "Les lymphocytes T4", "Les macrophages", "Les globules rouges"], "ans": "Les plasmocytes"}],
+        "Microbiologie": [{"q": "Les antibiotiques agissent généralement sur :", "opts": ["La paroi bactérienne", "La capside virale", "Le noyau des eucaryotes", "Les mitochondries"], "ans": "La paroi bactérienne"}],
+        "Cycle Cellulaire": [{"q": "Pendant quelle phase les chromosomes sont-ils alignés sur la plaque équatoriale ?", "opts": ["Métaphase", "Prophase", "Anaphase", "Télophase"], "ans": "Métaphase"}]
     },
     "Chimie": {
-        "Acide/Base": [{"q": "Une solution de pH 5 est :", "opts": ["100 fois plus acide qu'un pH 7", "2 fois plus acide qu'un pH 7", "Basique", "Neutre"], "ans": "100 fois plus acide qu'un pH 7"}],
-        "Redox": [{"q": "Dans une réduction, une espèce chimique :", "opts": ["Gagne des électrons", "Perd dei protoni", "Perd des électrons", "Libère de l'oxygène"], "ans": "Gagne des électrons"}],
-        "Stoechiométrie": [{"q": "Le volume molaire d'un gaz à 0°C et 1 atm est :", "opts": ["22,4 L/mol", "24,0 L/mol", "1,0 L/mol", "11,2 L/mol"], "ans": "22,4 L/mol"}],
-        "Organique": [{"q": "L'éthanol appartient à la famille des :", "opts": ["Alcools", "Aldéhydes", "Cétones", "Acides carboxyliques"], "ans": "Alcools"}],
-        "Gaz": [{"q": "La loi de Boyle-Mariotte s'énonce :", "opts": ["PV = constante", "V/T = constante", "P/T = constante", "n/V = constante"], "ans": "PV = constante"}],
-        "Solutions": [{"q": "La molarité s'exprime en :", "opts": ["mol/L", "g/L", "mol/kg", "L/mol"], "ans": "mol/L"}],
-        "Tableau Périodique": [{"q": "Les gaz rares se trouvent dans la colonne :", "opts": ["18", "1", "17", "2"], "ans": "18"}],
-        "Thermodynamique": [{"q": "Une réaction endothermique :", "opts": ["Absorbe de la chaleur", "Libère de l'énergie", "Est toujours rapide", "Refroidit le milieu"], "ans": "Absorbe de la chaleur"}],
-        "Liaisons": [{"q": "La liaison dans NaCl est :", "opts": ["Ionique", "Covalente", "Métallique", "Hydrogène"], "ans": "Ionique"}],
-        "Cinétique": [{"q": "Un catalyseur :", "opts": ["Abaisse l'énergie d'activation", "Consomme les réactifs", "Arrête la réaction", "Change le pH"], "ans": "Abaisse l'énergie d'activation"}]
+        "Solutions": [
+            {"q": "Masse de NaCl nécessaire pour préparer 500 mL d'une solution à 0,2 mol/L ? (M=58,5 g/mol)", "opts": ["5,85 g", "11,7 g", "2,92 g", "58,5 g"], "ans": "5,85 g"}
+        ],
+        "pH": [
+            {"q": "pH d'une solution de $Ba(OH)_2$ à $5 \cdot 10^{-4}$ mol/L ?", "opts": ["11", "3", "10", "4"], "ans": "11"}
+        ],
+        "Redox": [
+            {"q": "Dans $Cr_2O_7^{2-}$, le nombre d'oxydation du chrome est :", "opts": ["+6", "+7", "+3", "+12"], "ans": "+6"}
+        ],
+        "Organique": [
+            {"q": "L'isomérie de fonction existe entre :", "opts": ["Éthanol et éther diméthylique", "But-1-ène et but-2-ène", "Propan-1-ol et propan-2-ol", "Pentane et isopentane"], "ans": "Éthanol et éther diméthylique"}
+        ],
+        "Thermodynamique": [{"q": "Une réaction spontanée est caractérisée par :", "opts": ["$\Delta G < 0$", "$\Delta G > 0$", "$\Delta H > 0$", "$\Delta S = 0$"], "ans": "$\Delta G < 0$"}],
+        "Equilibre": [{"q": "Si on augmente la pression d'un système gazeux, l'équilibre se déplace vers :", "opts": ["Le côté avec moins de moles de gaz", "Le côté avec plus de moles de gaz", "La droite systématiquement", "Il ne bouge pas"], "ans": "Le côté avec moins de moles de gaz"}],
+        "Gaz Parfaits": [{"q": "À pression constante, si la température double (en K), le volume :", "opts": ["Double", "Est divisé par 2", "Reste constant", "Quadruple"], "ans": "Double"}],
+        "Orbitales": [{"q": "Configuration électronique du Carbone (Z=6) :", "opts": ["$1s^2 2s^2 2p^2$", "$1s^2 2s^2 2p^4$", "$1s^2 2s^2 2s^2$", "$1s^2 2s^4$"], "ans": "$1s^2 2s^2 2p^2$"}],
+        "Liaisons": [{"q": "Laquelle de ces molécules est polaire ?", "opts": ["$NH_3$", "$CH_4$", "$CO_2$", "$O_2$"], "ans": "$NH_3$"}],
+        "Cinétique": [{"q": "L'unité d'une constante de vitesse d'ordre 1 est :", "opts": ["$s^{-1}$", "$mol \cdot L^{-1} \cdot s^{-1}$", "$L \cdot mol^{-1} \cdot s^{-1}$", "$mol/L$"], "ans": "$s^{-1}$"}]
     },
     "Physique": {
-        "Optique": [{"q": "L'indice de réfraction du vide est :", "opts": ["1,0", "0", "1,33", "1,5"], "ans": "1,0"}],
-        "Mécanique": [{"q": "L'accélération de la pesanteur $g$ vaut environ :", "opts": ["9,81 $m/s^2$", "10 $km/h$", "0", "1,6 $m/s^2$"], "ans": "9,81 $m/s^2$"}],
-        "Électricité": [{"q": "La puissance s'exprime par la relation :", "opts": ["$P = U \\cdot I$", "$P = U/I$", "$P = R \\cdot I$", "$P = m \\cdot g$"], "ans": "$P = U \\cdot I$"}],
-        "Ondes": [{"q": "La fréquence est l'inverse de :", "opts": ["La période", "L'amplitude", "La longueur d'onde", "La célérité"], "ans": "La période"}],
-        "Fluides": [{"q": "La pression s'exprime en :", "opts": ["Pascal", "Joule", "Newton", "Watt"], "ans": "Pascal"}],
-        "Radioactivité": [{"q": "Une particule Alpha est un noyau de :", "opts": ["Hélium", "Hydrogène", "Carbone", "Plomb"], "ans": "Hélium"}],
-        "Énergie": [{"q": "L'énergie potentielle de pesanteur est :", "opts": ["$mgh$", "$\\frac{1}{2}mv^2$", "$UI$", "$RI^2$"], "ans": "$mgh$"}],
-        "Thermique": [{"q": "Le zéro absolu correspond à :", "opts": ["-273,15 °C", "0 °C", "100 °C", "-100 °C"], "ans": "-273,15 °C"}],
-        "Vitesse": [{"q": "108 km/h correspond à :", "opts": ["30 m/s", "10 m/s", "108 m/s", "300 m/s"], "ans": "30 m/s"}],
-        "Magnétisme": [{"q": "L'unité du champ magnétique est le :", "opts": ["Tesla", "Weber", "Volt", "Ohm"], "ans": "Tesla"}]
+        "Optique": [{"q": "Un objet est à 10 cm d'une lentille convergente (f = 5 cm). L'image est :", "opts": ["Réelle, renversée et de même taille", "Virtuelle et agrandie", "Réelle et plus petite", "À l'infini"], "ans": "Réelle, renversée et de même taille"}],
+        "Mécanique": [{"q": "Travail d'une force de 10N sur 5m avec un angle de 60° ?", "opts": ["25 J", "50 J", "43,3 J", "0 J"], "ans": "25 J"}],
+        "Électricité": [{"q": "Résistance totale de deux résistors de 6 $\Omega$ et 3 $\Omega$ en parallèle ?", "opts": ["2 $\Omega$", "9 $\Omega$", "4.5 $\Omega$", "1 $\Omega$"], "ans": "2 $\Omega$"}],
+        "Hydrostatique": [{"q": "Différence de pression entre 0m et 20m de profondeur sous l'eau ? ($g=10, \rho=1000$)", "opts": ["200.000 Pa", "20.000 Pa", "2.000 Pa", "20 bar"], "ans": "200.000 Pa"}],
+        "Cinématique": [{"q": "Un mobile passe de 0 à 100 km/h en 10s. Accélération moyenne ?", "opts": ["2,78 $m/s^2$", "10 $m/s^2$", "0,1 $m/s^2$", "27,8 $m/s^2$"], "ans": "2,78 $m/s^2$"}],
+        "Ondes": [{"q": "Longueur d'onde d'un son de 440 Hz (vitesse = 340 m/s) ?", "opts": ["0,77 m", "1,29 m", "149 km", "1,5 m"], "ans": "0,77 m"}],
+        "Radioactivité": [{"q": "Demi-vie = 10 min. Pourcentage restant après 30 min ?", "opts": ["12,5%", "25%", "33%", "50%"], "ans": "12,5%"}],
+        "Chaleur": [{"q": "Énergie pour chauffer 1kg d'eau de 10°C à 20°C ? ($c = 4180 J/kg \cdot K$)", "opts": ["41.800 J", "4.180 J", "418.000 J", "10 J"], "ans": "41.800 J"}],
+        "Magnétisme": [{"q": "Force d'un champ de 0,5T su un fil de 1m parcouru par 2A (perpendiculaire) ?", "opts": ["1 N", "0,5 N", "2 N", "4 N"], "ans": "1 N"}],
+        "Energie": [{"q": "Puissance d'un moteur soulevant 100kg à 2m en 10s ? ($g=10$)", "opts": ["200 W", "2000 W", "20 W", "1000 W"], "ans": "200 W"}]
     },
     "Mathématiques": {
-        "Dérivées": [{"q": "La dérivée de $\\sin(x)$ est :", "opts": ["$\\cos(x)$", "$-\\cos(x)$", "$\\sin(x)$", "0"], "ans": "$\\cos(x)$"}],
-        "Intégrales": [{"q": "L'intégrale de $1/x$ est :", "opts": ["$\\ln|x| + C$", "$x^2$", "$e^x$", "$-1/x^2$"], "ans": "$\\ln|x| + C$"}],
-        "Trigonométrie": [{"q": "$\\sin^2(x) + \\cos^2(x) = $", "opts": ["1", "0", "$\\tan(x)$", "$-1$"], "ans": "1"}],
-        "Vecteurs": [{"q": "Si due vecteurs sont perpendiculaires, leur produit scalaire est :", "opts": ["0", "1", "-1", "Infini"], "ans": "0"}],
-        "Logarithmes": [{"q": "$\\ln(a \\cdot b) = $", "opts": ["$\\ln(a) + \\ln(b)$", "$\\ln(a) \\cdot \\ln(b)$", "$a+b$", "$e^{a+b}$"], "ans": "$\\ln(a) + \\ln(b)$"}],
-        "Probabilités": [{"q": "La probabilité d'un événement certain est :", "opts": ["1", "0", "0,5", "100"], "ans": "1"}],
-        "Géométrie": [{"q": "L'aire d'un disque de rayon $R$ est :", "opts": ["$\\pi R^2$", "$2\\pi R$", "$4\\pi R^2$", "$\\pi R$"], "ans": "$\\pi R^2$"}],
-        "Algèbre": [{"q": "La solution de $2x - 4 = 0$ est :", "opts": ["2", "-2", "4", "0"], "ans": "2"}],
-        "Suites": [{"q": "Une suite où l'on ajoute toujours le même nombre est :", "opts": ["Arithmétique", "Géométrique", "Harmonique", "Constante"], "ans": "Arithmétique"}],
-        "Limites": [{"q": "La limite de $1/x$ quand $x \\to \\infty$ est :", "opts": ["0", "1", "$\\infty$", "$-1$"], "ans": "0"}]
+        "Analyse": [{"q": "Dérivée de $f(x) = \sin(2x)$ ?", "opts": ["$2\cos(2x)$", "$\cos(2x)$", "$-2\cos(2x)$", "$2\sin(x)$"], "ans": "$2\cos(2x)$"}],
+        "Vecteurs": [{"q": "Produit scalaire de $\vec{u}(3, -1)$ et $\vec{v}(2, 4)$ ?", "opts": ["2", "10", "5", "-2"], "ans": "2"}],
+        "Trigo": [{"q": "$\tan(x) = 1$ implique (sur $[0, \pi/2]$) :", "opts": ["$x = \pi/4$", "$x = \pi/6$", "$x = \pi/3$", "$x = 0$"], "ans": "$x = \pi/4$"}],
+        "Log": [{"q": "$\log_{10}(1000)$ est égal à :", "opts": ["3", "10", "100", "2"], "ans": "3"}],
+        "Suites": [{"q": "Raison d'une suite géométrique où $u_1=3$ et $u_3=12$ ($q>0$) ?", "opts": ["2", "4", "3", "9"], "ans": "2"}],
+        "Proba": [{"q": "Probabilité de tirer 2 as consécutivement sans remise dans un jeu de 52 ?", "opts": ["1/221", "1/169", "4/52", "1/13"], "ans": "1/221"}],
+        "Limites": [{"q": "Limite de $(x^2-1)/(x-1)$ quand $x \to 1$ ?", "opts": ["2", "1", "0", "Infini"], "ans": "2"}],
+        "Géométrie": [{"q": "Surface d'une sphère de rayon R ?", "opts": ["$4\pi R^2$", "$\frac{4}{3}\pi R^3$", "$2\pi R$", "$\pi R^2$"], "ans": "$4\pi R^2$"}],
+        "Integrale": [{"q": "Primitive de $e^{2x}$ ?", "opts": ["$\frac{1}{2}e^{2x} + C$", "$2e^{2x} + C$", "$e^{2x} + C$", "$e^{x^2} + C$"], "ans": "$\frac{1}{2}e^{2x} + C$"}],
+        "Complexes": [{"q": "Module de $z = 3 + 4i$ ?", "opts": ["5", "7", "25", "1"], "ans": "5"}]
     }
 }
 
-# --- LOGICA DI NAVIGAZIONE ---
+# --- LOGICA APP ---
 
 if 'state' not in st.session_state:
     st.session_state.state = "menu"
@@ -65,64 +87,65 @@ if 'state' not in st.session_state:
     st.session_state.questions = []
     st.session_state.current_idx = 0
     st.session_state.answered = False
+    st.session_state.feedback = None
 
-def start_balanced_quiz(subject):
-    # 1. Recupera tutti i sotto-argomenti per quella materia
-    sub_topics = list(DB_ARES[subject].keys())
-    # 2. Mescola i sotto-argomenti
-    random.shuffle(sub_topics)
+def start_quiz(subject):
+    topics = list(DB_ARES[subject].keys())
+    random.shuffle(topics)
     
-    selected_questions = []
-    # 3. Prendi una domanda da ogni sotto-argomento (fino a 10)
-    for topic in sub_topics[:10]:
-        q_pool = DB_ARES[subject][topic]
-        selected_q = random.choice(q_pool).copy()
-        selected_q['topic'] = topic
-        random.shuffle(selected_q['opts'])
-        selected_questions.append(selected_q)
-    
-    st.session_state.questions = selected_questions
+    selected_qs = []
+    for t in topics[:10]:
+        q_data = random.choice(DB_ARES[subject][t]).copy()
+        q_data['topic'] = t
+        random.shuffle(q_data['opts'])
+        selected_qs.append(q_data)
+        
+    st.session_state.questions = selected_qs
     st.session_state.state = "quiz"
     st.session_state.current_idx = 0
     st.session_state.score = 0.0
     st.session_state.answered = False
+    st.session_state.feedback = None
 
-def submit_answer(choice, correct):
+def submit(choice, correct):
     st.session_state.answered = True
     if choice == correct:
         st.session_state.score += 1.0
+        st.session_state.feedback = ("success", "✅ Bien joué !")
     else:
         st.session_state.score -= (1/3)
+        st.session_state.feedback = ("error", f"❌ Faux. La réponse était : {correct}")
 
-# --- INTERFACCIA ---
+# --- UI ---
 
-st.title("🩺 Quizzeo ARES - Simulatore Bilanciato")
-st.write("Ogni quiz contiene 10 argomenti diversi. Punteggio: +1 Corretta, -1/3 Errata.")
-st.divider()
+st.title("⚖️ Quizzeo ARES Elite")
+st.markdown("*Simulation avancée avec pénalité -1/3*")
 
 if st.session_state.state == "menu":
     cols = st.columns(2)
     with cols[0]:
-        st.button("🧬 Biologia", use_container_width=True, on_click=start_balanced_quiz, args=("Biologie",))
-        st.button("🧪 Chimica", use_container_width=True, on_click=start_balanced_quiz, args=("Chimie",))
+        st.button("🧬 Biologie (Elite)", use_container_width=True, on_click=start_quiz, args=("Biologie",))
+        st.button("🧪 Chimie (Elite)", use_container_width=True, on_click=start_quiz, args=("Chimie",))
     with cols[1]:
-        st.button("📐 Matematica", use_container_width=True, on_click=start_balanced_quiz, args=("Mathématiques",))
-        st.button("⚡ Fisica", use_container_width=True, on_click=start_balanced_quiz, args=("Physique",))
+        st.button("📐 Mathématiques (Elite)", use_container_width=True, on_click=start_quiz, args=("Mathématiques",))
+        st.button("⚡ Physique (Elite)", use_container_width=True, on_click=start_quiz, args=("Physique",))
 
 elif st.session_state.state == "quiz":
     q = st.session_state.questions[st.session_state.current_idx]
-    
-    st.caption(f"Argomento: **{q['topic']}** | Domanda {st.session_state.current_idx + 1} di 10")
+    st.caption(f"Topic: {q['topic']} | Q {st.session_state.current_idx + 1}/10")
     st.progress((st.session_state.current_idx + 1) / 10)
     
     st.subheader(q['q'])
     
     for opt in q['opts']:
         st.button(opt, use_container_width=True, key=f"q{st.session_state.current_idx}_{opt}",
-                  disabled=st.session_state.answered, on_click=submit_answer, args=(opt, q['ans']))
+                  disabled=st.session_state.answered, on_click=submit, args=(opt, q['ans']))
     
     if st.session_state.answered:
-        if st.button("Prossima Domanda ➡️", type="primary"):
+        tipo, msg = st.session_state.feedback
+        st.success(msg) if tipo == "success" else st.error(msg)
+        
+        if st.button("Suivant ➡️", type="primary"):
             if st.session_state.current_idx < 9:
                 st.session_state.current_idx += 1
                 st.session_state.answered = False
@@ -133,8 +156,7 @@ elif st.session_state.state == "quiz":
 
 elif st.session_state.state == "results":
     st.balloons()
-    st.header("🏁 Risultato Finale")
-    st.metric("Punteggio ARES", f"{round(st.session_state.score, 2)} / 10")
-    if st.button("Torna al Menu"):
+    st.metric("Score Final", f"{round(st.session_state.score, 2)} / 10")
+    if st.button("Menu"):
         st.session_state.state = "menu"
         st.rerun()
