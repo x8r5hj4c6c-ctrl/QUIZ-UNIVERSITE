@@ -234,4 +234,68 @@ def calculate_score_ares() -> float:
     return score
 
 # --- INTERFACCIA UTENTE ---
-st.title("🧬 Matte
+st.title("🧬 Matteo x M3.0 | Generatore Infinito ARES")
+st.markdown("### Simulatore procedurale basato sul programma ufficiale")
+
+with st.sidebar:
+    st.header("⚙️ Configurazione Quiz")
+    materia_scelta = st.selectbox("Materia", ["Tutte le materie", "Chimica", "Fisica", "Biologia", "Matematica"])
+    num_questions = st.slider("Numero di domande", 5, 30, 10)
+    
+    if st.button("🚀 Genera Nuovo Quiz", use_container_width=True):
+        start_quiz(materia_scelta, num_questions)
+        st.rerun()
+
+# Schermata principale
+if not st.session_state.quiz_data:
+    st.info("👈 Seleziona una materia e clicca su 'Genera Nuovo Quiz' per iniziare!")
+    st.image("https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000", use_column_width=True) # Placeholder immagine scienza
+else:
+    if st.session_state.finished:
+        st.balloons()
+        st.header("🏁 Quiz Terminato!")
+        final_score = calculate_score_ares()
+        st.metric("Punteggio ARES", f"{final_score:.2f} / {len(st.session_state.quiz_data)}")
+        if st.button("🔄 Torna alla Home"):
+            st.session_state.quiz_data = []
+            st.rerun()
+    else:
+        idx = st.session_state.current_idx
+        q = st.session_state.quiz_data[idx]
+        
+        # Header
+        col1, col2 = st.columns(2)
+        with col1: st.markdown(f"**{q['materia']}** | Difficoltà: {q['difficulty']}")
+        with col2: st.markdown(f"**Punteggio ARES: {calculate_score_ares():.2f}**")
+        
+        st.progress((idx) / len(st.session_state.quiz_data))
+        st.markdown(f"### Domanda {idx+1} di {len(st.session_state.quiz_data)}")
+        st.markdown(f"**{q['q']}**")
+        
+        # Form risposta
+        with st.form(key=f"form_{idx}"):
+            user_choice = st.radio("Scegli una risposta:", st.session_state.current_options, key=f"radio_{idx}")
+            submit = st.form_submit_button("✅ Conferma Risposta")
+            
+        if submit and not st.session_state.submitted:
+            st.session_state.submitted = True
+            is_correct = (user_choice == q['ans'])
+            st.session_state.answers_history.append({'is_correct': is_correct})
+            
+            if is_correct:
+                st.session_state.score += 1
+                st.success(f"✅ Corretto! +1 punto")
+            else:
+                st.error(f"❌ Sbagliato! La risposta corretta era: {q['ans']} (-1/3 punto)")
+                
+        # Navigazione
+        if st.session_state.submitted:
+            if st.button("➡️ Prossima Domanda", use_container_width=True):
+                if idx + 1 < len(st.session_state.quiz_data):
+                    st.session_state.current_idx += 1
+                    st.session_state.submitted = False
+                    prepare_question()
+                    st.rerun()
+                else:
+                    st.session_state.finished = True
+                    st.rerun()
