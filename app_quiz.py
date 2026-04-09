@@ -1,215 +1,189 @@
 import streamlit as st
 import random
-from typing import Dict, List, Optional
+import math
+from typing import Dict, List, Tuple, Any
 import json
 from pathlib import Path
 
-# --- CONFIGURATION DE LA PAGE ---
+# --- CONFIGURAZIONE PAGINA ---
 st.set_page_config(
-    page_title="Matteo x M3.0 | Simulateur ARES",
-    page_icon="🎓",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    page_title="Matteo x M3.0 | Generatore ARES",
+    page_icon="🧬",
+    layout="centered"
 )
 
-# --- STYLES CSS PERSONNALISÉS ---
+# --- CSS ---
 st.markdown("""
 <style>
-    .stButton > button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 10px;
-        padding: 10px 24px;
-        font-weight: bold;
-        transition: all 0.3s;
-    }
-    .stButton > button:hover {
-        background-color: #45a049;
-        transform: scale(1.02);
-    }
-    .correct-answer {
-        padding: 10px;
-        background-color: #d4edda;
-        border-left: 4px solid #28a745;
-        border-radius: 5px;
-    }
-    .incorrect-answer {
-        padding: 10px;
-        background-color: #f8d7da;
-        border-left: 4px solid #dc3545;
-        border-radius: 5px;
-    }
-    .score-display {
-        font-size: 24px;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-    .question-counter {
-        color: #7f8c8d;
-        font-size: 14px;
-    }
+    .stButton > button { background-color: #4CAF50; color: white; border-radius: 10px; padding: 10px 24px; font-weight: bold; }
+    .stButton > button:hover { background-color: #45a049; }
+    .correct-answer { padding: 10px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 5px; }
+    .incorrect-answer { padding: 10px; background-color: #f8d7da; border-left: 4px solid #dc3545; border-radius: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- GESTION PERSISTANCE DES DONNÉES ---
-DATA_FILE = Path("quiz_progress.json")
+# --- MOTORE DI GENERAZIONE PROCEDURALE ---
 
-def save_progress():
-    """Sauvegarde la progression du quiz"""
-    progress_data = {
-        "quiz_data": st.session_state.quiz_data,
-        "score": st.session_state.score,
-        "current_idx": st.session_state.current_idx,
-        "finished": st.session_state.finished,
-        "submitted": st.session_state.submitted,
-        "answers_history": st.session_state.answers_history,
-        "selected_materia": st.session_state.selected_materia
-    }
-    DATA_FILE.write_text(json.dumps(progress_data))
+class QuestionGenerator:
+    """Generatore di domande basato su regole e casualità"""
+    
+    @staticmethod
+    def generate_chimica() -> Dict:
+        """Genera una domanda di chimica casuale"""
+        tipo = random.choice(["stechiometria", "gas", "soluzioni", "atomo", "equilibrio", "redox"])
+        
+        if tipo == "stechiometria":
+            composti = [("NaCl", 58.44), ("H2O", 18.02), ("CO2", 44.01), ("CaCO3", 100.09), ("H2SO4", 98.08)]
+            composto, massa_molare = random.choice(composti)
+            massa = random.randint(5, 50)
+            moli = massa / massa_molare
+            corretto = f"{moli:.2f} mol"
+            
+            domanda = f"Calcola il numero di moli presenti in {massa} g di {composto} (Massa Molare ≈ {massa_molare:.2f} g/mol)."
+            distrattori = [
+                f"{massa * massa_molare:.2f} mol",
+                f"{massa_molare / massa:.2f} mol",
+                f"{(massa / massa_molare) * 1000:.2f} mmol"
+            ]
+            
+        elif tipo == "gas":
+            R = 0.0821
+            scenario = random.choice(["volume", "pressione", "moli"])
+            n = random.randint(1, 5)
+            T = random.choice([273, 298, 350])
+            P = random.uniform(1.0, 5.0)
+            V = (n * R * T) / P
+            
+            if scenario == "volume":
+                domanda = f"Calcola il volume (in L) occupato da {n} moli di gas ideale a {T} K e {P:.1f} atm. (R = 0.0821 L·atm/mol·K)"
+                corretto = f"{V:.2f} L"
+                distrattori = [f"{(n*R*P)/T:.2f} L", f"{(P*V)/(n*R):.2f} L", f"{V*2:.2f} L"]
+            else:
+                P_var = random.uniform(1.0, 3.0)
+                V_var = random.uniform(10.0, 50.0)
+                n_calc = (P_var * V_var) / (R * T)
+                domanda = f"Quante moli di gas sono contenute in un recipiente di {V_var:.1f} L a {T} K e {P_var:.1f} atm?"
+                corretto = f"{n_calc:.2f} mol"
+                distrattori = [f"{(P_var*V_var*R)/T:.2f} mol", f"{n_calc*2:.2f} mol", f"{n_calc/2:.2f} mol"]
 
-def load_progress() -> Optional[Dict]:
-    """Charge la progression sauvegardée"""
-    if DATA_FILE.exists():
-        return json.loads(DATA_FILE.read_text())
-    return None
+        elif tipo == "atomo":
+            elementi = [("Carbonio", "C", 6), ("Ossigeno", "O", 8), ("Sodio", "Na", 11), ("Cloro", "Cl", 17), ("Calcio", "Ca", 20)]
+            nome, simbolo, Z = random.choice(elementi)
+            config_map = {6: "1s² 2s² 2p²", 8: "1s² 2s² 2p⁴", 11: "1s² 2s² 2p⁶ 3s¹", 17: "1s² 2s² 2p⁶ 3s² 3p⁵", 20: "1s² 2s² 2p⁶ 3s² 3p⁶ 4s²"}
+            domanda = f"Qual è la configurazione elettronica corretta per il {nome} (Z={Z})?"
+            corretto = config_map[Z]
+            distrattori = [config_map.get(Z+1, "1s² 2s²"), config_map.get(Z-1, "1s² 2s² 2p⁶"), "1s² 2s² 2p⁶ 3s²"]
 
-# --- BASE DE DONNÉES ÉTENDUE (Questions inspirées des annales ARES) ---
-def init_database():
-    """Initialise la base de données des questions"""
-    return {
-        "Biologie": [
-            {"q": "Quelle structure est absente dans une cellule animale mais présente dans une cellule végétale ?", 
-             "opts": ["Paroi cellulosique", "Mitochondrie", "Noyau", "Membrane plasmique"], 
-             "ans": "Paroi cellulosique",
-             "difficulty": "Facile",
-             "explanation": "La paroi cellulosique est une structure rigide présente uniquement chez les cellules végétales."},
-            {"q": "Le rôle principal des mitochondries est :", 
-             "opts": ["La respiration cellulaire", "La synthèse des protéines", "La photosynthèse", "Le stockage des graisses"], 
-             "ans": "La respiration cellulaire",
-             "difficulty": "Facile",
-             "explanation": "Les mitochondries sont les centrales énergétiques de la cellule."},
-            {"q": "Quelle est la base azotée spécifique à l'ARN ?", 
-             "opts": ["Uracile", "Thymine", "Adénine", "Cytosine"], 
-             "ans": "Uracile",
-             "difficulty": "Moyen",
-             "explanation": "L'uracile remplace la thymine dans l'ARN."},
-            {"q": "Un nucléotide d'ADN est composé de :", 
-             "opts": ["Désoxyribose + Base azotée + Phosphate", "Ribose + Base azotée + Phosphate", "Acide aminé + Phosphate", "Glucose + Base azotée"], 
-             "ans": "Désoxyribose + Base azotée + Phosphate",
-             "difficulty": "Moyen",
-             "explanation": "Le désoxyribose est le sucre spécifique de l'ADN."},
-            {"q": "La mitose produit :", 
-             "opts": ["Deux cellules filles identiques", "Quatre cellules haploïdes", "Deux gamètes", "Une cellule œuf"], 
-             "ans": "Deux cellules filles identiques",
-             "difficulty": "Facile",
-             "explanation": "La mitose est une division cellulaire produisant deux cellules filles génétiquement identiques."},
-            {"q": "Qu'illustre le fait que les moustiques résistants aux insecticides prédominent dans les régions traitées ?",
-             "opts": ["Le créationnisme", "La macro-évolution", "La sélection naturelle", "La théorie de Lamarck"],
-             "ans": "La sélection naturelle",
-             "difficulty": "Moyen",
-             "explanation": "C'est un exemple classique de pression de sélection exercée par l'environnement (ici, l'insecticide) [citation:1]."}
-        ],
-        "Chimie": [
-            {"q": "Quelle est la configuration électronique du Carbone (Z=6) ?", 
-             "opts": ["1s² 2s² 2p²", "1s² 2s² 2p⁶", "1s² 2s²", "1s² 2p⁴"], 
-             "ans": "1s² 2s² 2p²",
-             "difficulty": "Moyen",
-             "explanation": "Le carbone a 6 électrons répartis en 1s² 2s² 2p²."},
-            {"q": "Quel est le pH d'une solution neutre à 25°C ?", 
-             "opts": ["7", "0", "14", "1"], 
-             "ans": "7",
-             "difficulty": "Facile",
-             "explanation": "À 25°C, le pH neutre est 7."},
-            {"q": "Le groupe fonctionnel -OH caractérise quelle famille ?", 
-             "opts": ["Les alcools", "Les aldéhydes", "Les cétones", "Les acides carboxyliques"], 
-             "ans": "Les alcools",
-             "difficulty": "Facile",
-             "explanation": "Le groupe hydroxyle (-OH) est caractéristique des alcools."},
-            {"q": "La mole est l'unité de :", 
-             "opts": ["La quantité de matière", "La masse", "Le volume", "La pression"], 
-             "ans": "La quantité de matière",
-             "difficulty": "Facile",
-             "explanation": "La mole mesure la quantité de matière (6,022 × 10²³ entités)."},
-            {"q": "Dans la réaction du permanganate de potassium avec l'iodure de potassium en milieu acide, combien de molécules d'eau faut-il ajouter pour équilibrer ?",
-             "opts": ["8 à droite", "4 à gauche", "8 à gauche", "Aucune"],
-             "ans": "8 à droite",
-             "difficulty": "Difficile",
-             "explanation": "La réaction d'oxydoréduction nécessite 8 H₂O pour équilibrer les oxygènes et hydrogènes en milieu acide [citation:1]."}
-        ],
-        "Physique": [
-            {"q": "Un corps de 5 kg est soumis à une force de 20 N. Quelle est son accélération ?", 
-             "opts": ["4 m/s²", "100 m/s²", "0.25 m/s²", "15 m/s²"], 
-             "ans": "4 m/s²",
-             "difficulty": "Moyen",
-             "explanation": "F = ma → a = F/m = 20/5 = 4 m/s²"},
-            {"q": "La loi d'Ohm s'écrit :", 
-             "opts": ["U = R * I", "P = U * I", "V = d / t", "E = mc²"], 
-             "ans": "U = R * I",
-             "difficulty": "Facile",
-             "explanation": "U = R × I est la loi fondamentale de l'électricité."},
-            {"q": "L'unité de la force dans le Système International est le :", 
-             "opts": ["Newton", "Joule", "Watt", "Pascal"], 
-             "ans": "Newton",
-             "difficulty": "Facile",
-             "explanation": "Le Newton (N) est l'unité de force."},
-            {"q": "Quelle doit être la section d'un fil de résistivité 1,6.10⁻⁸ Ωm pour que sa résistance soit de 1Ω ? (longueur estimée à 20m)",
-             "opts": ["0,32 mm²", "3,2 mm²", "32 mm²", "320 mm²"],
-             "ans": "32 mm²",
-             "difficulty": "Difficile",
-             "explanation": "R = ρ*L/S => S = ρ*L/R. Le calcul nécessite de connaître la longueur du fil (ici, 200 spires de cadre mobile) [citation:1]."}
-        ],
-        "Mathématiques": [
-            {"q": "Quelle est la dérivée de f(x) = x² ?", 
-             "opts": ["2x", "x", "2", "x³/3"], 
-             "ans": "2x",
-             "difficulty": "Facile",
-             "explanation": "La dérivée de x^n est n·x^(n-1)"},
-            {"q": "La somme des angles internes d'un triangle est :", 
-             "opts": ["180°", "360°", "90°", "270°"], 
-             "ans": "180°",
-             "difficulty": "Facile",
-             "explanation": "La somme des angles d'un triangle est toujours 180°."},
-            {"q": "Quelle est la valeur de log10(100) ?", 
-             "opts": ["2", "10", "1", "0"], 
-             "ans": "2",
-             "difficulty": "Facile",
-             "explanation": "10² = 100, donc log10(100) = 2"},
-            {"q": "Dans un repère orthonormé, A(0;3), B(3;6), C(4;4). Que vaut le cosinus de l'angle ABC ?",
-             "opts": ["√6/6", "√8/8", "√10/10", "√12/12"],
-             "ans": "√10/10",
-             "difficulty": "Difficile",
-             "explanation": "Calcul vectoriel avec BA et BC. cos(θ) = (BA·BC) / (||BA|| * ||BC||) [citation:1]."}
-        ],
-        "Communication & Raisonnement": [
-            {"q": "Consultation : 'Bonjour Mme D., que puis-je faire pour vous aujourd'hui ?' Pourquoi cette phrase est-elle la plus adaptée ?",
-             "opts": ["Car elle est la plus rapide", "Car c'est une question ouverte qui laisse la patiente s'exprimer", "Car elle rappelle le motif de consultation", "Car elle impose le sujet de l'hypertension"],
-             "ans": "Car c'est une question ouverte qui laisse la patiente s'exprimer",
-             "difficulty": "Facile",
-             "explanation": "En médecine, une question ouverte permet de ne pas présupposer du motif de consultation [citation:1]."},
-            {"q": "Votre mère fumeuse dit en public avoir arrêté, ce qui est faux. Quelle est la réaction la plus appropriée ?",
-             "opts": ["Ne rien dire", "Faire de grands yeux réprobateurs", "En parler en privé après le dîner", "La reprendre ironiquement devant les invités"],
-             "ans": "En parler en privé après le dîner",
-             "difficulty": "Facile",
-             "explanation": "Il est préférable de ne pas humilier ou confronter un proche en public, mais d'aborder le sujet en privé [citation:1]."},
-            {"q": "Votre ami a mauvaise haleine. Vous devez :",
-             "opts": ["Lui faire la remarque poliment", "Lui proposer un chewing-gum sans rien dire", "Parler d'un autre problème dentaire", "Ne rien dire"],
-             "ans": "Lui faire la remarque poliment",
-             "difficulty": "Moyen",
-             "explanation": "L'honnêteté avec tact est souvent la meilleure approche pour un ami [citation:1]."},
-            {"q": "Face à une patiente nécessitant une opération urgente de l'aorte, quelle est l'attitude la plus empathique ?",
-             "opts": ["Appeler le bloc en sa présence", "Écouter ses inquiétudes tout en expliquant l'urgence", "Rester focalisé sur la maladie", "Lui conseiller de réfléchir et de rappeler"],
-             "ans": "Écouter ses inquiétudes tout en expliquant l'urgence",
-             "difficulty": "Moyen",
-             "explanation": "L'empathie consiste à reconnaître les émotions du patient tout en assurant sa prise en charge médicale [citation:1]."}
+        else: # Fallback per altri tipi
+            domanda = "Bilanciare la reazione: _Fe + _O2 -> _Fe2O3. Qual è il coefficiente stechiometrico del Fe?"
+            corretto = "4"
+            distrattori = ["2", "3", "1"]
+
+        opts = [corretto] + distrattori[:3]
+        random.shuffle(opts)
+        return {"q": domanda, "opts": opts, "ans": corretto, "difficulty": "Moyen", "materia": "Chimica"}
+
+    @staticmethod
+    def generate_fisica() -> Dict:
+        """Genera una domanda di fisica casuale"""
+        tipo = random.choice(["cinematica", "dinamica", "ottica", "elettricita"])
+        
+        if tipo == "cinematica":
+            v0 = random.randint(0, 20)
+            a = random.uniform(1.0, 5.0)
+            t = random.randint(2, 10)
+            s = v0*t + 0.5*a*(t**2)
+            domanda = f"Un'auto parte con velocità iniziale {v0} m/s e accelera a {a:.1f} m/s² per {t} secondi. Qual è lo spazio percorso?"
+            corretto = f"{s:.1f} m"
+            distrattori = [f"{v0*t:.1f} m", f"{a*t:.1f} m", f"{v0 + a*t:.1f} m"]
+            
+        elif tipo == "dinamica":
+            m = random.randint(2, 20)
+            a = random.uniform(1.0, 8.0)
+            F = m * a
+            domanda = f"Una forza costante agisce su una massa di {m} kg imprimendole un'accelerazione di {a:.1f} m/s². Quanto vale la forza?"
+            corretto = f"{F:.1f} N"
+            distrattori = [f"{m/a:.1f} N", f"{m*a*9.81:.1f} N", f"{F/2:.1f} N"]
+            
+        elif tipo == "ottica":
+            f = random.uniform(5.0, 20.0)
+            p = random.uniform(10.0, 30.0)
+            q = 1 / ((1/f) - (1/p))
+            G = -q/p
+            domanda = f"Un oggetto è posto a {p:.1f} cm da una lente convergente di focale f = {f:.1f} cm. Qual è l'ingrandimento lineare G?"
+            corretto = f"{G:.2f}"
+            distrattori = [f"{-G:.2f}", f"{q:.2f}", f"{p/f:.2f}"]
+            
+        else: # elettricità
+            V = random.randint(5, 24)
+            R1 = random.randint(10, 100)
+            R2 = random.randint(10, 100)
+            I_serie = V / (R1 + R2)
+            domanda = f"Due resistenze R1={R1}Ω e R2={R2}Ω sono collegate in serie a una batteria da {V}V. Qual è la corrente nel circuito?"
+            corretto = f"{I_serie:.3f} A"
+            distrattori = [f"{V/(R1*R2/(R1+R2)):.3f} A", f"{V/R1:.3f} A", f"{I_serie*2:.3f} A"]
+
+        opts = [corretto] + distrattori[:3]
+        random.shuffle(opts)
+        return {"q": domanda, "opts": opts, "ans": corretto, "difficulty": "Moyen", "materia": "Fisica"}
+
+    @staticmethod
+    def generate_biologia() -> Dict:
+        """Genera una domanda di biologia basata sul programma ARES"""
+        domande_fisse = [
+            {"q": "Quale struttura differenzia principalmente una cellula vegetale da una animale?", "opts": ["Parete cellulare", "Mitocondri", "Nucleo", "Ribosomi"], "ans": "Parete cellulare"},
+            {"q": "In un incrocio tra due eterozigoti (Aa x Aa), qual è la probabilità di ottenere un fenotipo recessivo?", "opts": ["25%", "50%", "75%", "0%"], "ans": "25%"},
+            {"q": "Quale dei seguenti è un esempio di selezione naturale?", "opts": ["Resistenza agli antibiotici nei batteri", "Collo delle giraffe secondo Lamarck", "Peso alla nascita nei neonati umani", "Colore dei fiori nei piselli di Mendel"], "ans": "Resistenza agli antibiotici nei batteri"},
+            {"q": "Quale livello ecologico rappresenta l'insieme di tutte le popolazioni in una data area?", "opts": ["Comunità", "Ecosistema", "Biosfera", "Habitat"], "ans": "Comunità"},
+            {"q": "Quale fase della mitosi segue immediatamente la metafase?", "opts": ["Anafase", "Profase", "Telofase", "Interfase"], "ans": "Anafase"}
         ]
-    }
+        scelta = random.choice(domande_fisse)
+        opts = list(scelta["opts"])
+        random.shuffle(opts)
+        return {"q": scelta["q"], "opts": opts, "ans": scelta["ans"], "difficulty": "Facile", "materia": "Biologia"}
 
-# --- INITIALISATION SESSION STATE ---
-if 'db_ares' not in st.session_state:
-    st.session_state.db_ares = init_database()
+    @staticmethod
+    def generate_matematica() -> Dict:
+        """Genera una domanda di matematica casuale"""
+        tipo = random.choice(["algebra", "trigonometria", "analisi"])
+        
+        if tipo == "algebra":
+            a = random.randint(1, 5)
+            b = random.randint(-5, 5)
+            c = random.randint(-10, 10)
+            delta = b**2 - 4*a*c
+            if delta >= 0:
+                x1 = (-b + math.sqrt(delta)) / (2*a)
+                domanda = f"Risolvi l'equazione: {a}x² + {b}x + {c} = 0. Qual è una delle soluzioni?"
+                corretto = f"{x1:.2f}"
+                distrattori = [f"{-x1:.2f}", f"{a*x1:.2f}", f"{b/a:.2f}"]
+            else:
+                domanda = f"Risolvi l'equazione: {a}x² + {b}x + {c} = 0. Qual è una delle soluzioni?"
+                corretto = "Nessuna soluzione reale"
+                distrattori = ["0", "1", "-1"]
+                
+        elif tipo == "trigonometria":
+            angolo = random.choice([30, 45, 60, 90, 180])
+            func = random.choice(["sin", "cos"])
+            valori = {("sin", 30): "1/2", ("cos", 60): "1/2", ("sin", 90): "1", ("cos", 180): "-1"}
+            domanda = f"Quanto vale {func}({angolo}°)?"
+            corretto = valori.get((func, angolo), "√2/2")
+            distrattori = ["0", "1/2", "√3/2"]
+            
+        else: # analisi
+            a = random.randint(2, 5)
+            n = random.randint(2, 4)
+            derivata = f"{a*n}x^{n-1}"
+            domanda = f"Qual è la derivata di f(x) = {a}x^{n}?"
+            corretto = derivata
+            distrattori = [f"{a}x^{n-1}", f"{a*n}x^{n}", f"{n}x^{a}"]
 
-if 'initialized' not in st.session_state:
-    st.session_state.initialized = True
+        opts = [corretto] + distrattori[:3]
+        random.shuffle(opts)
+        return {"q": domanda, "opts": opts, "ans": corretto, "difficulty": "Moyen", "materia": "Matematica"}
+
+# --- INIZIALIZZAZIONE STATO ---
+if 'quiz_data' not in st.session_state:
     st.session_state.quiz_data = []
     st.session_state.score = 0
     st.session_state.current_idx = 0
@@ -217,26 +191,35 @@ if 'initialized' not in st.session_state:
     st.session_state.submitted = False
     st.session_state.current_options = []
     st.session_state.answers_history = []
-    st.session_state.selected_materia = None
-    st.session_state.num_questions = 10
-    st.session_state.show_explanations = True
 
-# --- FONCTIONS UTILITAIRES ---
-def start_quiz(materia: str, num_questions: int = 10):
-    """Démarre un nouveau quiz"""
-    questions = list(st.session_state.db_ares[materia])
-    random.shuffle(questions)
-    st.session_state.quiz_data = questions[:min(num_questions, len(questions))]
+def start_quiz(materia: str, num_questions: int):
+    """Genera un nuovo set di domande"""
+    st.session_state.quiz_data = []
+    generator = QuestionGenerator()
+    
+    for _ in range(num_questions):
+        if materia == "Tutte le materie":
+            materia_casuale = random.choice(["Chimica", "Fisica", "Biologia", "Matematica"])
+            if materia_casuale == "Chimica": q = generator.generate_chimica()
+            elif materia_casuale == "Fisica": q = generator.generate_fisica()
+            elif materia_casuale == "Biologia": q = generator.generate_biologia()
+            else: q = generator.generate_matematica()
+        else:
+            if materia == "Chimica": q = generator.generate_chimica()
+            elif materia == "Fisica": q = generator.generate_fisica()
+            elif materia == "Biologia": q = generator.generate_biologia()
+            else: q = generator.generate_matematica()
+            
+        st.session_state.quiz_data.append(q)
+        
     st.session_state.current_idx = 0
     st.session_state.score = 0
     st.session_state.finished = False
     st.session_state.submitted = False
     st.session_state.answers_history = []
-    st.session_state.selected_materia = materia
     prepare_question()
 
 def prepare_question():
-    """Prépare la question courante avec options mélangées"""
     idx = st.session_state.current_idx
     if idx < len(st.session_state.quiz_data):
         opts = list(st.session_state.quiz_data[idx]['opts'])
@@ -244,201 +227,11 @@ def prepare_question():
         st.session_state.current_options = opts
 
 def calculate_score_ares() -> float:
-    """Calcule le score selon la méthode ARES (+1 pour une bonne réponse, -1/3 pour une erreur)"""
     score = 0.0
-    for answer in st.session_state.answers_history:
-        if answer['is_correct']:
-            score += 1
-        else:
-            score -= 1/3
+    for ans in st.session_state.answers_history:
+        if ans['is_correct']: score += 1
+        else: score -= 1/3
     return score
 
-def get_feedback_message(percentage: float) -> str:
-    """Retourne un message de feedback personnalisé"""
-    if percentage >= 90:
-        return "Excellent ! 🌟 Vous maîtrisez parfaitement le sujet !"
-    elif percentage >= 70:
-        return "Très bien ! 👍 Continuez comme ça !"
-    elif percentage >= 50:
-        return "Pas mal ! 📚 Un peu plus de révision et ce sera parfait !"
-    else:
-        return "Continuez à vous entraîner ! 💪 La pratique fait le maître !"
-
-# --- INTERFACE PRINCIPALE ---
-st.title("🚀 Matteo x M3.0")
-st.markdown("### Simulateur ARES 2018-2025")
-
-# Sidebar avec options
-with st.sidebar:
-    st.header("⚙️ Paramètres")
-    st.session_state.num_questions = st.slider(
-        "Nombre de questions", 
-        min_value=5, 
-        max_value=20, 
-        value=st.session_state.num_questions
-    )
-    st.session_state.show_explanations = st.checkbox(
-        "Afficher les explications", 
-        value=st.session_state.show_explanations
-    )
-    
-    # Sauvegarde/Chargement
-    st.header("💾 Progression")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Sauvegarder", use_container_width=True):
-            if st.session_state.quiz_data and not st.session_state.finished:
-                save_progress()
-                st.success("✅ Progression sauvegardée !")
-            else:
-                st.warning("⚠️ Pas de quiz en cours")
-    with col2:
-        if st.button("Charger", use_container_width=True):
-            progress = load_progress()
-            if progress:
-                for key, value in progress.items():
-                    st.session_state[key] = value
-                st.success("✅ Progression chargée !")
-                st.rerun()
-            else:
-                st.warning("⚠️ Aucune sauvegarde trouvée")
-
-# Zone principale
-if not st.session_state.quiz_data or st.session_state.finished:
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        materia_scelta = st.selectbox(
-            "📚 Choisissez votre matière :", 
-            list(st.session_state.db_ares.keys())
-        )
-    
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        start_button = st.button(
-            "▶️ Commencer le Quiz", 
-            use_container_width=True,
-            type="primary"
-        )
-    
-    if start_button:
-        start_quiz(materia_scelta, st.session_state.num_questions)
-        st.rerun()
-    
-    # Statistiques des questions disponibles
-    st.markdown("---")
-    st.subheader("📊 Questions disponibles")
-    for materia, questions in st.session_state.db_ares.items():
-        st.write(f"**{materia}**: {len(questions)} questions")
-
-else:
-    idx = st.session_state.current_idx
-    q = st.session_state.quiz_data[idx]
-    
-    # En-tête du quiz
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        st.markdown(f"**{st.session_state.selected_materia}**")
-    with col2:
-        # Affiche le score ARES en temps réel
-        current_score_ares = calculate_score_ares()
-        st.markdown(f"📊 **Score ARES: {current_score_ares:.2f}**")
-    with col3:
-        if st.button("🏠 Menu", use_container_width=True):
-            st.session_state.quiz_data = []
-            st.session_state.finished = False
-            if DATA_FILE.exists():
-                DATA_FILE.unlink()
-            st.rerun()
-    
-    # Progression
-    progress_value = (idx + 1) / len(st.session_state.quiz_data)
-    st.progress(progress_value)
-    st.markdown(f"<p class='question-counter'>Question {idx + 1} sur {len(st.session_state.quiz_data)}</p>", 
-                unsafe_allow_html=True)
-    
-    # Question
-    st.markdown(f"### {q['q']}")
-    if 'difficulty' in q:
-        difficulty_color = {"Facile": "🟢", "Moyen": "🟡", "Difficile": "🔴"}.get(q['difficulty'], "")
-        st.caption(f"Difficulté: {difficulty_color} {q['difficulty']}")
-    
-    # Formulaire de réponse
-    with st.form(key=f"form_{idx}"):
-        user_choice = st.radio(
-            "✨ Sélectionnez votre réponse :", 
-            st.session_state.current_options,
-            key=f"radio_{idx}"
-        )
-        submit = st.form_submit_button("✅ Valider la réponse", use_container_width=True)
-    
-    if submit and not st.session_state.submitted:
-        st.session_state.submitted = True
-        is_correct = user_choice == q['ans']
-        
-        # Enregistrement de la réponse
-        st.session_state.answers_history.append({
-            'question': q['q'],
-            'user_answer': user_choice,
-            'correct_answer': q['ans'],
-            'is_correct': is_correct
-        })
-        
-        if is_correct:
-            st.success("✅ Correct ! +1 point")
-            if st.session_state.show_explanations and 'explanation' in q:
-                st.markdown(f"<div class='correct-answer'>💡 {q['explanation']}</div>", 
-                          unsafe_allow_html=True)
-        else:
-            st.error(f"❌ Incorrect. -1/3 point. La réponse était : **{q['ans']}**")
-            if st.session_state.show_explanations and 'explanation' in q:
-                st.markdown(f"<div class='incorrect-answer'>💡 {q['explanation']}</div>", 
-                          unsafe_allow_html=True)
-    
-    # Navigation
-    if st.session_state.submitted:
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            if st.button("⬅️ Précédent", use_container_width=True) and idx > 0:
-                st.session_state.current_idx -= 1
-                st.session_state.submitted = False
-                prepare_question()
-                st.rerun()
-        with col2:
-            button_text = "Terminer 🏁" if idx + 1 >= len(st.session_state.quiz_data) else "Continuer ➡️"
-            if st.button(button_text, use_container_width=True, type="primary"):
-                if idx + 1 < len(st.session_state.quiz_data):
-                    st.session_state.current_idx += 1
-                    st.session_state.submitted = False
-                    prepare_question()
-                    st.rerun()
-                else:
-                    st.session_state.finished = True
-                    st.rerun()
-
-# --- ÉCRAN FINAL ---
-if st.session_state.finished:
-    st.balloons()
-    st.header("🏁 Résultats du Quiz")
-    
-    # Score principal (Méthode ARES)
-    final_score_ares = calculate_score_ares()
-    total_questions = len(st.session_state.quiz_data)
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Score ARES", f"{final_score_ares:.2f} / {total_questions}")
-    with col2:
-        # Pourcentage basé sur le score maximum possible
-        percentage = (final_score_ares / total_questions) * 100 if total_questions > 0 else 0
-        st.metric("Pourcentage", f"{percentage:.1f}%")
-    with col3:
-        bonnes_reponses = sum(1 for ans in st.session_state.answers_history if ans['is_correct'])
-        st.metric("Bonnes réponses", f"{bonnes_reponses}/{total_questions}")
-    
-    st.markdown("---")
-    st.markdown(f"*{get_feedback_message(percentage)}*")
-    
-    if st.button("🔄 Retour au menu", use_container_width=True):
-        st.session_state.quiz_data = []
-        st.rerun()
+# --- INTERFACCIA UTENTE ---
+st.title("🧬 Matte
