@@ -286,4 +286,159 @@ with st.sidebar:
     st.header("💾 Progression")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Sauvegarder", use_container_width=True
+        if st.button("Sauvegarder", use_container_width=True):
+            if st.session_state.quiz_data and not st.session_state.finished:
+                save_progress()
+                st.success("✅ Progression sauvegardée !")
+            else:
+                st.warning("⚠️ Pas de quiz en cours")
+    with col2:
+        if st.button("Charger", use_container_width=True):
+            progress = load_progress()
+            if progress:
+                for key, value in progress.items():
+                    st.session_state[key] = value
+                st.success("✅ Progression chargée !")
+                st.rerun()
+            else:
+                st.warning("⚠️ Aucune sauvegarde trouvée")
+
+# Zone principale
+if not st.session_state.quiz_data or st.session_state.finished:
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        materia_scelta = st.selectbox(
+            "📚 Choisissez votre matière :", 
+            list(st.session_state.db_ares.keys())
+        )
+    
+    with col2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        start_button = st.button(
+            "▶️ Commencer le Quiz", 
+            use_container_width=True,
+            type="primary"
+        )
+    
+    if start_button:
+        start_quiz(materia_scelta, st.session_state.num_questions)
+        st.rerun()
+    
+    # Statistiques des questions disponibles
+    st.markdown("---")
+    st.subheader("📊 Questions disponibles")
+    for materia, questions in st.session_state.db_ares.items():
+        st.write(f"**{materia}**: {len(questions)} questions")
+
+else:
+    idx = st.session_state.current_idx
+    q = st.session_state.quiz_data[idx]
+    
+    # En-tête du quiz
+    col1, col2, col3 = st.columns([2, 1, 1])
+    with col1:
+        st.markdown(f"**{st.session_state.selected_materia}**")
+    with col2:
+        # Affiche le score ARES en temps réel
+        current_score_ares = calculate_score_ares()
+        st.markdown(f"📊 **Score ARES: {current_score_ares:.2f}**")
+    with col3:
+        if st.button("🏠 Menu", use_container_width=True):
+            st.session_state.quiz_data = []
+            st.session_state.finished = False
+            if DATA_FILE.exists():
+                DATA_FILE.unlink()
+            st.rerun()
+    
+    # Progression
+    progress_value = (idx + 1) / len(st.session_state.quiz_data)
+    st.progress(progress_value)
+    st.markdown(f"<p class='question-counter'>Question {idx + 1} sur {len(st.session_state.quiz_data)}</p>", 
+                unsafe_allow_html=True)
+    
+    # Question
+    st.markdown(f"### {q['q']}")
+    if 'difficulty' in q:
+        difficulty_color = {"Facile": "🟢", "Moyen": "🟡", "Difficile": "🔴"}.get(q['difficulty'], "")
+        st.caption(f"Difficulté: {difficulty_color} {q['difficulty']}")
+    
+    # Formulaire de réponse
+    with st.form(key=f"form_{idx}"):
+        user_choice = st.radio(
+            "✨ Sélectionnez votre réponse :", 
+            st.session_state.current_options,
+            key=f"radio_{idx}"
+        )
+        submit = st.form_submit_button("✅ Valider la réponse", use_container_width=True)
+    
+    if submit and not st.session_state.submitted:
+        st.session_state.submitted = True
+        is_correct = user_choice == q['ans']
+        
+        # Enregistrement de la réponse
+        st.session_state.answers_history.append({
+            'question': q['q'],
+            'user_answer': user_choice,
+            'correct_answer': q['ans'],
+            'is_correct': is_correct
+        })
+        
+        if is_correct:
+            st.success("✅ Correct ! +1 point")
+            if st.session_state.show_explanations and 'explanation' in q:
+                st.markdown(f"<div class='correct-answer'>💡 {q['explanation']}</div>", 
+                          unsafe_allow_html=True)
+        else:
+            st.error(f"❌ Incorrect. -1/3 point. La réponse était : **{q['ans']}**")
+            if st.session_state.show_explanations and 'explanation' in q:
+                st.markdown(f"<div class='incorrect-answer'>💡 {q['explanation']}</div>", 
+                          unsafe_allow_html=True)
+    
+    # Navigation
+    if st.session_state.submitted:
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            if st.button("⬅️ Précédent", use_container_width=True) and idx > 0:
+                st.session_state.current_idx -= 1
+                st.session_state.submitted = False
+                prepare_question()
+                st.rerun()
+        with col2:
+            button_text = "Terminer 🏁" if idx + 1 >= len(st.session_state.quiz_data) else "Continuer ➡️"
+            if st.button(button_text, use_container_width=True, type="primary"):
+                if idx + 1 < len(st.session_state.quiz_data):
+                    st.session_state.current_idx += 1
+                    st.session_state.submitted = False
+                    prepare_question()
+                    st.rerun()
+                else:
+                    st.session_state.finished = True
+                    st.rerun()
+
+# --- ÉCRAN FINAL ---
+if st.session_state.finished:
+    st.balloons()
+    st.header("🏁 Résultats du Quiz")
+    
+    # Score principal (Méthode ARES)
+    final_score_ares = calculate_score_ares()
+    total_questions = len(st.session_state.quiz_data)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Score ARES", f"{final_score_ares:.2f} / {total_questions}")
+    with col2:
+        # Pourcentage basé sur le score maximum possible
+        percentage = (final_score_ares / total_questions) * 100 if total_questions > 0 else 0
+        st.metric("Pourcentage", f"{percentage:.1f}%")
+    with col3:
+        bonnes_reponses = sum(1 for ans in st.session_state.answers_history if ans['is_correct'])
+        st.metric("Bonnes réponses", f"{bonnes_reponses}/{total_questions}")
+    
+    st.markdown("---")
+    st.markdown(f"*{get_feedback_message(percentage)}*")
+    
+    if st.button("🔄 Retour au menu", use_container_width=True):
+        st.session_state.quiz_data = []
+        st.rerun()
