@@ -4,7 +4,7 @@ import random
 # Configurazione Pagina
 st.set_page_config(page_title="Quizzeo - Matteo Sapia", page_icon="⚖️", layout="centered")
 
-# --- DATABASE ELITE (Basato su ARES e le tue immagini) ---
+# --- DATABASE ELITE (Basato su ARES e concetti chiave) ---
 DB_ARES = {
     "Biologie": {
         "Cytologie": [{"q": "L'organite responsable de la modification et de l'emballage des protéines est :", "opts": ["L'appareil de Golgi", "Le réticulum endoplasmique lisse", "Le lysosome", "Le nucléole"], "ans": "L'appareil de Golgi"}],
@@ -32,7 +32,7 @@ DB_ARES = {
     },
     "Physique": {
         "Optique": [{"q": "Une lentille convergente a une vergence de 4 dioptries. Sa focale est :", "opts": ["25 cm", "4 cm", "40 cm", "10 cm"], "ans": "25 cm"}],
-        "Mécanique": [{"q": "Énergie cinétique d'un corps de 4kg à 3 m/s ?", "opts": ["18 J", "12 J", "36 J", "6 J"], "ans": "18 J"}],
+        "Mécanique": [{"q": "Énergie cinétique d'un corpo di 4kg a 3 m/s ?", "opts": ["18 J", "12 J", "36 J", "6 J"], "ans": "18 J"}],
         "Électricité": [{"q": "Puissance dissipée par une résistance de 10 $\Omega$ traversée par 2A ?", "opts": ["40 W", "20 W", "100 W", "5 W"], "ans": "40 W"}],
         "Hydrostatique": [{"q": "Poussée d'Archimède sur un objet de 2L totalement immergé dans l'eau ?", "opts": ["20 N", "2 N", "200 N", "0,2 N"], "ans": "20 N"}],
         "Ondes": [{"q": "La vitesse du son dans l'air est environ :", "opts": ["340 m/s", "300.000 km/s", "1500 m/s", "100 m/s"], "ans": "340 m/s"}],
@@ -48,8 +48,8 @@ DB_ARES = {
         "Trigonométrie": [{"q": "$\\cos(60^\\circ)$ vaut :", "opts": ["1/2", "$\\sqrt{3}/2$", "$\\sqrt{2}/2$", "1"], "ans": "1/2"}],
         "Logarithmes": [{"q": "$\\ln(e^3)$ est égal à :", "opts": ["3", "$e$", "1", "0"], "ans": "3"}],
         "Probabilités": [{"q": "Probabilité d'obtenir un chiffre pair avec un dé à 6 faces ?", "opts": ["1/2", "1/3", "1/6", "2/3"], "ans": "1/2"}],
-        "Géométrie": [{"q": "Volume d'un cylindre de rayon R e hauteur H ?", "opts": ["$\\pi R^2 H$", "$2\\pi R H$", "$\\frac{1}{3}\\pi R^2 H$", "$\\pi R H^2$"], "ans": "$\\pi R^2 H"}],
-        "Algèbre": [{"q": "Si $3x + 9 = 0$, allora $x$ è :", "opts": ["-3", "3", "0", "1"], "ans": "-3"}],
+        "Géométrie": [{"q": "Volume d'un cylindre de rayon R et hauteur H ?", "opts": ["$\\pi R^2 H$", "$2\\pi R H$", "$\\frac{1}{3}\\pi R^2 H$", "$\\pi R H^2$"], "ans": "$\\pi R^2 H$"}],
+        "Algèbre": [{"q": "Si $3x + 9 = 0$, alors $x$ est :", "opts": ["-3", "3", "0", "1"], "ans": "-3"}],
         "Suites": [{"q": "Somme des angles internes d'un hexagone ?", "opts": ["720°", "540°", "360°", "1080°"], "ans": "720°"}],
         "Limites": [{"q": "Limite de $e^{-x}$ quand $x \\to +\\infty$ ?", "opts": ["0", "$+\\infty$", "1", "$-1$"], "ans": "0"}],
         "Analyse": [{"q": "La fonction $f(x) = x^2$ est :", "opts": ["Paire", "Impaire", "Périodique", "Négative"], "ans": "Paire"}]
@@ -70,11 +70,13 @@ def start_quiz(subject):
     topics = list(DB_ARES[subject].keys())
     random.shuffle(topics)
     selected_qs = []
+    # Selezione di 10 argomenti diversi per garantire varietà
     for t in topics[:10]:
         q_data = random.choice(DB_ARES[subject][t]).copy()
         q_data['topic'] = t
         random.shuffle(q_data['opts'])
         selected_qs.append(q_data)
+    
     st.session_state.questions = selected_qs
     st.session_state.state = "quiz"
     st.session_state.current_idx = 0
@@ -82,7 +84,7 @@ def start_quiz(subject):
     st.session_state.answered = False
     st.session_state.feedback = None
 
-def submit(choice, correct):
+def submit_answer(choice, correct):
     st.session_state.answered = True
     if choice == correct:
         st.session_state.score += 1.0
@@ -113,18 +115,24 @@ elif st.session_state.state == "quiz":
     
     st.subheader(q['q'])
     
+    # Bottoni per le risposte
     for opt in q['opts']:
         st.button(opt, use_container_width=True, key=f"q{st.session_state.current_idx}_{opt}",
-                  disabled=st.session_state.answered, on_click=submit, args=(opt, q['ans']))
+                  disabled=st.session_state.answered, on_click=submit_answer, args=(opt, q['ans']))
     
+    # Feedback dopo la risposta
     if st.session_state.answered:
         tipo, msg = st.session_state.feedback
-        st.success(msg) if tipo == "success" else st.error(msg)
-        
+        if tipo == "success":
+            st.success(msg)
+        else:
+            st.error(msg)
+            
         if st.button("Suivant ➡️", type="primary"):
             if st.session_state.current_idx < 9:
                 st.session_state.current_idx += 1
                 st.session_state.answered = False
+                st.session_state.feedback = None
                 st.rerun()
             else:
                 st.session_state.state = "results"
@@ -134,6 +142,8 @@ elif st.session_state.state == "results":
     st.balloons()
     st.header("🏁 Résultat Final")
     st.metric("Score ARES", f"{round(st.session_state.score, 2)} / 10")
+    st.write("Rappel du barème : +1 pour une réponse correcte, -1/3 pour une erreur.")
+    
     if st.button("Retour au Menu"):
         st.session_state.state = "menu"
         st.rerun()
