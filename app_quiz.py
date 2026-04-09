@@ -1,149 +1,74 @@
-import streamlit as st
-import random
+# --- DATABASE COMPLETO ARES (ESTRATTO DAI FILE 2018-2025) ---
 
-# Configurazione Pagina
-st.set_page_config(page_title="Quizzeo - Matteo Sapia", page_icon="⚖️", layout="centered")
-
-# --- DATABASE ELITE (Basato su ARES e concetti chiave) ---
 DB_ARES = {
     "Biologie": {
-        "Cytologie": [{"q": "L'organite responsable de la modification et de l'emballage des protéines est :", "opts": ["L'appareil de Golgi", "Le réticulum endoplasmique lisse", "Le lysosome", "Le nucléole"], "ans": "L'appareil de Golgi"}],
-        "Génétique": [{"q": "Une cellule humaine en fin de prophase de mitose contient :", "opts": ["46 chromosomes à 2 chromatides", "46 chromosomes à 1 chromatide", "23 chromosomes à 2 chromatides", "92 chromosomes à 2 chromatides"], "ans": "46 chromosomes à 2 chromatides"}],
-        "Métabolisme": [{"q": "La respiration cellulaire produit du CO2 pendant :", "opts": ["Le cycle de Krebs", "La glycolyse", "La chaîne respiratoire", "La phase S"], "ans": "Le cycle de Krebs"}],
-        "Physiologie": [{"q": "Quelle hormone est produite par les cellules alpha du pancréas ?", "opts": ["Le glucagon", "L'insuline", "L'adrénaline", "La thyroxine"], "ans": "Le glucagon"}],
-        "Biochimie": [{"q": "L'adénine s'apparie toujours avec la thymine via :", "opts": ["2 liaisons hydrogène", "3 liaisons hydrogène", "1 liaison covalente", "Une liaison ionique"], "ans": "2 liaisons hydrogène"}],
-        "Histologie": [{"q": "Le tissu qui assure la conduction des messages est le :", "opts": ["Tissu nerveux", "Tissu conjonctif", "Tissu épithélial", "Tissu musculaire"], "ans": "Tissu nerveux"}],
-        "Immunologie": [{"q": "Quel type de cellule produit les anticorps ?", "opts": ["Plasmocyte", "Lymphocyte T8", "Macrophage", "Hématie"], "ans": "Plasmocyte"}],
-        "Evolution": [{"q": "L'unité de base de l'évolution est :", "opts": ["La population", "L'individu", "L'écosystème", "La biosphère"], "ans": "La population"}],
-        "Botanique": [{"q": "Le processus de transformation de l'énergie lumineuse en énergie chimique est :", "opts": ["La photosynthèse", "La transpiration", "La respiration", "La mitose"], "ans": "La photosynthèse"}],
-        "Microbiologie": [{"q": "Un virus est caractérisé par :", "opts": ["L'absence de métabolisme propre", "Une structure cellulaire complète", "Une reproduction par mitose", "La présence de mitochondries"], "ans": "L'absence de métabolisme propre"}]
+        "Cytologie": [
+            {"q": "Quelle structure est absente dans une cellule animale mais présente dans une cellule végétale ?", "opts": ["Paroi cellulosique", "Mitochondrie", "Noyau", "Membrane plasmique"], "ans": "Paroi cellulosique"},
+            {"q": "Le rôle principal des mitochondries est :", "opts": ["La respiration cellulaire", "La synthèse des protéines", "La photosynthèse", "Le stockage des graisses"], "ans": "La respiration cellulaire"},
+            {"q": "L'organite responsable de la synthèse des protéines est :", "opts": ["Le ribosome", "Le lysosome", "L'appareil de Golgi", "Le chloroplaste"], "ans": "Le ribosome"}
+        ],
+        "Génétique": [
+            {"q": "Un nucléotide d'ADN est composé de :", "opts": ["Désoxyribose + Base azotée + Phosphate", "Ribose + Base azotée + Phosphate", "Acide aminé + Phosphate", "Glucose + Base azotée"], "ans": "Désoxyribose + Base azotée + Phosphate"},
+            {"q": "Si un brin d'ADN a la séquence ATGC, le brin complémentaire sera :", "opts": ["TACG", "UACG", "GCTA", "ATGC"], "ans": "TACG"},
+            {"q": "Quelle est la base azotée spécifique à l'ARN ?", "opts": ["Uracile", "Thymine", "Adénine", "Cytosine"], "ans": "Uracile"},
+            {"q": "Le croisement de deux hétérozygotes (Aa x Aa) donne quel ratio phénotypique ?", "opts": ["3:1", "1:1", "9:3:3:1", "100% dominant"], "ans": "3:1"}
+        ]
     },
     "Chimie": {
-        "Masse Volumique": [{"q": "Un récipient de 20g contient 50 cm³ d'un liquide. La masse totale est de 60g. Masse volumique ?", "opts": ["0,8 g/cm³", "1,2 g/cm³", "1,0 g/cm³", "0,5 g/cm³"], "ans": "0,8 g/cm³"}],
-        "Acide/Base": [{"q": "Quel est le pH d'une solution de $HCl$ à $10^{-2}$ mol/L ?", "opts": ["2", "12", "7", "1"], "ans": "2"}],
-        "Redox": [{"q": "L'oxydant est une espèce qui :", "opts": ["Capte des électrons", "Donne des électrons", "Donne des protons", "Ne réagit pas"], "ans": "Capte des électrons"}],
-        "Stoechiométrie": [{"q": "Masse molaire de $CaCO_3$ ? (Ca=40, C=12, O=16)", "opts": ["100 g/mol", "68 g/mol", "84 g/mol", "120 g/mol"], "ans": "100 g/mol"}],
-        "Organique": [{"q": "Le groupement fonctionnel des alcools est :", "opts": ["-OH", "-CHO", "-COOH", "-NH2"], "ans": "-OH"}],
-        "Gaz": [{"q": "À 0°C et 1 atm, le volume molaire d'un gaz parfait est :", "opts": ["22,4 L", "24,0 L", "11,2 L", "1,0 L"], "ans": "22,4 L"}],
-        "Liaisons": [{"q": "Quelle molécule possède une liaison triple ?", "opts": ["$N_2$", "$O_2$", "$H_2$", "$Cl_2$"], "ans": "$N_2$"}],
-        "Tableau Périodique": [{"q": "L'électronégativité augmente généralement :", "opts": ["Vers le haut et la droite", "Vers le bas et la gauche", "Uniquement vers le bas", "Elle est constante"], "ans": "Vers le haut et la droite"}],
-        "Solutions": [{"q": "On dilue 10 fois une solution 1M. La nouvelle concentration est :", "opts": ["0,1 M", "10 M", "0,01 M", "0,5 M"], "ans": "0,1 M"}],
-        "Thermodynamique": [{"q": "Une réaction qui libère de la chaleur est dite :", "opts": ["Exothermique", "Endothermique", "Isotherme", "Adiabatique"], "ans": "Exothermique"}]
+        "Inorganique": [
+            {"q": "Quelle est la configuration électronique du Carbone (Z=6) ?", "opts": ["1s² 2s² 2p²", "1s² 2s² 2p⁶", "1s² 2s²", "1s² 2p⁴"], "ans": "1s² 2s² 2p²"},
+            {"q": "Dans une réaction d'oxydoréduction, l'oxydant est l'espèce qui :", "opts": ["Gagne des électrons", "Perd des électrons", "Gagne des protons", "Libère de l'oxygène"], "ans": "Gagne des électrons"},
+            {"q": "Quel est le pH d'une solution neutre à 25°C ?", "opts": ["7", "0", "14", "1"], "ans": "7"}
+        ],
+        "Organique": [
+            {"q": "Le groupe fonctionnel -OH caractérise quelle famille ?", "opts": ["Les alcools", "Les aldéhydes", "Les cétones", "Les acides carboxyliques"], "ans": "Les alcools"},
+            {"q": "Quelle est la formule générale d'un alcane linéaire ?", "opts": ["CnH2n+2", "CnH2n", "CnH2n-2", "CnHn"], "ans": "CnH2n+2"},
+            {"q": "Quel est le nom dell'alcane à 3 carbones (C3H8) ?", "opts": ["Propane", "Méthane", "Éthane", "Butane"], "ans": "Propane"}
+        ],
+        "Solutions": [
+            {"q": "Quelle est la molarité d'une solution contenant 0,5 mole de soluté dans 2 litres ?", "opts": ["0,25 M", "1 M", "0,5 M", "2,5 M"], "ans": "0,25 M"},
+            {"q": "Le produit ionique de l'eau (Ke) à 25°C est égal à :", "opts": ["10^-14", "10^-7", "1", "14"], "ans": "10^-14"}
+        ]
     },
     "Physique": {
-        "Optique": [{"q": "Une lentille convergente a une vergence de 4 dioptries. Sa focale est :", "opts": ["25 cm", "4 cm", "40 cm", "10 cm"], "ans": "25 cm"}],
-        "Mécanique": [{"q": "Énergie cinétique d'un corpo di 4kg a 3 m/s ?", "opts": ["18 J", "12 J", "36 J", "6 J"], "ans": "18 J"}],
-        "Électricité": [{"q": "Puissance dissipée par une résistance de 10 $\Omega$ traversée par 2A ?", "opts": ["40 W", "20 W", "100 W", "5 W"], "ans": "40 W"}],
-        "Hydrostatique": [{"q": "Poussée d'Archimède sur un objet de 2L totalement immergé dans l'eau ?", "opts": ["20 N", "2 N", "200 N", "0,2 N"], "ans": "20 N"}],
-        "Ondes": [{"q": "La vitesse du son dans l'air est environ :", "opts": ["340 m/s", "300.000 km/s", "1500 m/s", "100 m/s"], "ans": "340 m/s"}],
-        "Cinématique": [{"q": "Distance parcourue en 5s à une vitesse constante de 12 m/s ?", "opts": ["60 m", "17 m", "2,4 m", "120 m"], "ans": "60 m"}],
-        "Radioactivité": [{"q": "Après 2 demi-vies, il reste :", "opts": ["25% de l'échantillon", "50%", "12,5%", "0%"], "ans": "25% de l'échantillon"}],
-        "Chaleur": [{"q": "La température de 0 K correspond à :", "opts": ["-273,15 °C", "0 °C", "100 °C", "-459 °C"], "ans": "-273,15 °C"}],
-        "Magnétisme": [{"q": "L'unité du flux magnétique est le :", "opts": ["Weber", "Tesla", "Ampère", "Henry"], "ans": "Weber"}],
-        "Forces": [{"q": "Poids d'un objet de 500g sur Terre ($g=10$) ?", "opts": ["5 N", "50 N", "500 N", "0,5 N"], "ans": "5 N"}]
+        "Mécanique": [
+            {"q": "Un corps de 5 kg est soumis à une force de 20 N. Quelle est son accélération ?", "opts": ["4 m/s²", "100 m/s²", "0.25 m/s²", "15 m/s²"], "ans": "4 m/s²"},
+            {"q": "L'énergie cinétique d'un objet dépend de :", "opts": ["Sa masse et le carré de sa vitesse", "Sa hauteur", "Sa forme", "Sa température"], "ans": "Sa masse et le carré de sa vitesse"}
+        ],
+        "Optique": [
+            {"q": "L'indice de réfraction d'un milieu est défini par :", "opts": ["n = c/v", "n = v/c", "n = c*v", "n = c+v"], "ans": "n = c/v"},
+            {"q": "Une lentille convergente forme une image réelle quand l'objet est situé :", "opts": ["Au-delà du foyer", "Entre le foyer et la lentille", "Sur la lentille", "À l'infini uniquement"], "ans": "Au-delà du foyer"}
+        ],
+        "Électricité": [
+            {"q": "Quelle est l'unité de la différence de potentiel électrique ?", "opts": ["Volt", "Ampère", "Ohm", "Watt"], "ans": "Volt"},
+            {"q": "Dans un circuit en série, l'intensità du courant est :", "opts": ["La même partout", "Partagée tra i componenti", "Nulle", "Infinie"], "ans": "La même partout"}
+        ],
+        "Ondes": [
+            {"q": "La période (T) est l'inverse de :", "opts": ["La fréquence (f)", "La longueur d'onde", "La célérité", "L'amplitude"], "ans": "La fréquence (f)"},
+            {"q": "Le domaine des fréquences audibles par l'homme est :", "opts": ["20 Hz à 20 kHz", "0 Hz à 100 Hz", "1 MHz à 10 MHz", "Plus de 100 kHz"], "ans": "20 Hz à 20 kHz"}
+        ]
     },
     "Mathématiques": {
-        "Vecteurs": [{"q": "Dans un carré ABCD de côté 4, $\\vec{AB} \\cdot \\vec{AC} = $", "opts": ["16", "0", "32", "8"], "ans": "16"}],
-        "Dérivées": [{"q": "Dérivée de $f(x) = 5x^3 - 2x$ ?", "opts": ["$15x^2 - 2$", "$5x^2 - 2$", "$15x^2$", "$10x - 2$"], "ans": "$15x^2 - 2$"}],
-        "Trigonométrie": [{"q": "$\\cos(60^\\circ)$ vaut :", "opts": ["1/2", "$\\sqrt{3}/2$", "$\\sqrt{2}/2$", "1"], "ans": "1/2"}],
-        "Logarithmes": [{"q": "$\\ln(e^3)$ est égal à :", "opts": ["3", "$e$", "1", "0"], "ans": "3"}],
-        "Probabilités": [{"q": "Probabilité d'obtenir un chiffre pair avec un dé à 6 faces ?", "opts": ["1/2", "1/3", "1/6", "2/3"], "ans": "1/2"}],
-        "Géométrie": [{"q": "Volume d'un cylindre de rayon R et hauteur H ?", "opts": ["$\\pi R^2 H$", "$2\\pi R H$", "$\\frac{1}{3}\\pi R^2 H$", "$\\pi R H^2$"], "ans": "$\\pi R^2 H$"}],
-        "Algèbre": [{"q": "Si $3x + 9 = 0$, alors $x$ est :", "opts": ["-3", "3", "0", "1"], "ans": "-3"}],
-        "Suites": [{"q": "Somme des angles internes d'un hexagone ?", "opts": ["720°", "540°", "360°", "1080°"], "ans": "720°"}],
-        "Limites": [{"q": "Limite de $e^{-x}$ quand $x \\to +\\infty$ ?", "opts": ["0", "$+\\infty$", "1", "$-1$"], "ans": "0"}],
-        "Analyse": [{"q": "La fonction $f(x) = x^2$ est :", "opts": ["Paire", "Impaire", "Périodique", "Négative"], "ans": "Paire"}]
+        "Analyse": [
+            {"q": "Quelle est la dérivée de f(x) = sin(x) ?", "opts": ["cos(x)", "-cos(x)", "sin(x)", "tan(x)"], "ans": "cos(x)"},
+            {"q": "La limite de 1/x quand x tend verso l'infini est :", "opts": ["0", "1", "Infini", "Indéterminée"], "ans": "0"}
+        ],
+        "Algèbre": [
+            {"q": "Quelle est la solution de l'équation ln(x) = 1 ?", "opts": ["e", "0", "1", "10"], "ans": "e"},
+            {"q": "Le discriminant (Δ) de l'équation x² - 5x + 6 = 0 est :", "opts": ["1", "25", "0", "-1"], "ans": "1"},
+            {"q": "Si 3x - 5 = 16, alors x est égal à :", "opts": ["7", "3", "21", "5"], "ans": "7"}
+        ],
+        "Trigonométrie": [
+            {"q": "Quelle est la valeur de cos(π) ?", "opts": ["-1", "1", "0", "1/2"], "ans": "-1"},
+            {"q": "Si sin(x) = 1, allora x può essere uguale a :", "opts": ["π/2", "π", "0", "2π"], "ans": "π/2"}
+        ],
+        "Géométrie": [
+            {"q": "L'aire d'un disque de rayon R est :", "opts": ["πR²", "2πR", "4πR²", "πR³/3"], "ans": "πR²"},
+            {"q": "Dans un triangle rectangle, le cosinus d'un angle est :", "opts": ["Côté adjacent / Hypoténuse", "Côté opposé / Hypoténuse", "Côté opposé / Côté adjacent", "Hypoténuse / Côté opposé"], "ans": "Côté adjacent / Hypoténuse"}
+        ],
+        "Probabilités": [
+            {"q": "Si on lance deux dés, quelle est la probabilité d'obtenir une somme de 12 ?", "opts": ["1/36", "1/6", "1/12", "2/36"], "ans": "1/36"},
+            {"q": "La probabilité d'un événement certain est :", "opts": ["1", "0", "0,5", "100"], "ans": "1"}
+        ]
     }
 }
-
-# --- LOGICA DI NAVIGAZIONE ---
-
-if 'state' not in st.session_state:
-    st.session_state.state = "menu"
-    st.session_state.score = 0.0
-    st.session_state.current_idx = 0
-    st.session_state.questions = []
-    st.session_state.answered = False
-    st.session_state.feedback = None
-
-def start_quiz(subject):
-    topics = list(DB_ARES[subject].keys())
-    random.shuffle(topics)
-    selected_qs = []
-    # Selezione di 10 argomenti diversi per garantire varietà
-    for t in topics[:10]:
-        q_data = random.choice(DB_ARES[subject][t]).copy()
-        q_data['topic'] = t
-        random.shuffle(q_data['opts'])
-        selected_qs.append(q_data)
-    
-    st.session_state.questions = selected_qs
-    st.session_state.state = "quiz"
-    st.session_state.current_idx = 0
-    st.session_state.score = 0.0
-    st.session_state.answered = False
-    st.session_state.feedback = None
-
-def submit_answer(choice, correct):
-    st.session_state.answered = True
-    if choice == correct:
-        st.session_state.score += 1.0
-        st.session_state.feedback = ("success", "✅ Bien joué !")
-    else:
-        st.session_state.score -= (1/3)
-        st.session_state.feedback = ("error", f"❌ Faux. La réponse était : **{correct}**")
-
-# --- UI ---
-
-st.title("Quizzeo - Prodotto da Matteo Sapia")
-st.markdown("---")
-
-if st.session_state.state == "menu":
-    st.subheader("Sélectionnez votre épreuve (10 questions uniques)")
-    cols = st.columns(2)
-    with cols[0]:
-        st.button("🧬 Biologie", use_container_width=True, on_click=start_quiz, args=("Biologie",))
-        st.button("🧪 Chimie", use_container_width=True, on_click=start_quiz, args=("Chimie",))
-    with cols[1]:
-        st.button("📐 Mathématiques", use_container_width=True, on_click=start_quiz, args=("Mathématiques",))
-        st.button("⚡ Physique", use_container_width=True, on_click=start_quiz, args=("Physique",))
-
-elif st.session_state.state == "quiz":
-    q = st.session_state.questions[st.session_state.current_idx]
-    st.caption(f"Thème: {q['topic']} | Question {st.session_state.current_idx + 1}/10")
-    st.progress((st.session_state.current_idx + 1) / 10)
-    
-    st.subheader(q['q'])
-    
-    # Bottoni per le risposte
-    for opt in q['opts']:
-        st.button(opt, use_container_width=True, key=f"q{st.session_state.current_idx}_{opt}",
-                  disabled=st.session_state.answered, on_click=submit_answer, args=(opt, q['ans']))
-    
-    # Feedback dopo la risposta
-    if st.session_state.answered:
-        tipo, msg = st.session_state.feedback
-        if tipo == "success":
-            st.success(msg)
-        else:
-            st.error(msg)
-            
-        if st.button("Suivant ➡️", type="primary"):
-            if st.session_state.current_idx < 9:
-                st.session_state.current_idx += 1
-                st.session_state.answered = False
-                st.session_state.feedback = None
-                st.rerun()
-            else:
-                st.session_state.state = "results"
-                st.rerun()
-
-elif st.session_state.state == "results":
-    st.balloons()
-    st.header("🏁 Résultat Final")
-    st.metric("Score ARES", f"{round(st.session_state.score, 2)} / 10")
-    st.write("Rappel du barème : +1 pour une réponse correcte, -1/3 pour une erreur.")
-    
-    if st.button("Retour au Menu"):
-        st.session_state.state = "menu"
-        st.rerun()
