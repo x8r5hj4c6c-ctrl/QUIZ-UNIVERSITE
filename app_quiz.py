@@ -2,107 +2,121 @@ import streamlit as st
 import random
 import math
 
-st.set_page_config(page_title="Simulateur Concours Complet", page_icon="🎓")
+st.set_page_config(page_title="Simulateur Concours Élite", page_icon="🏆")
 
-# --- DATABASE DI LOGICA E ARGOMENTI ---
+# --- SISTEMA ANTI-RIPETIZIONE ---
+if 'seen_questions' not in st.session_state:
+    st.session_state.seen_questions = set()
 
-def get_math():
-    sub = random.choice(["Vecteurs", "Algèbre", "Trigonométrie", "Analyse"])
-    if sub == "Vecteurs":
-        L = random.randint(2, 8)
-        q = f"Dans un carré ABCD de côté {L}, que vaut le produit scalaire AB · CA ?"
-        corr = -(L**2) # AB e CA hanno angolo 135° o proiezione opposta
-        options = [str(corr), "0", str(L**2), str(round(L*math.sqrt(2), 2))]
-    elif sub == "Algèbre":
-        x = random.randint(1, 10)
-        q = f"Si log2(x) + log2(4) = {2 + int(math.log2(x)) if x%2==0 else 5}, quelle est la valeur de x ?" # Esempio semplificato
-        # Facciamo una equazione lineare più gestibile per il generatore
-        a, b = random.randint(2, 5), random.randint(10, 30)
-        res = a * x + b
-        q = f"Résoudre l'équation pour x : {a}x + {b} = {res}"
-        corr = str(x)
-        options = [corr, str(x+2), str(x-1), "0"]
-    else:
-        q = "Quelle est la dérivée de f(x) = sin(x) + 3x² ?"
-        corr = "cos(x) + 6x"
-        options = [corr, "-cos(x) + 6x", "cos(x) + 3x", "sin(x) + 6x"]
+# --- GENERATORI DI ALTO LIVELLO ---
+
+def get_math_expert():
+    sub = random.choice(["Trigo", "Analyse", "Vecteurs"])
+    if sub == "Trigo":
+        # Calcolo di angoli non banali
+        val = random.choice([30, 45, 60])
+        rad = {30: "π/6", 45: "π/4", 60: "π/3"}
+        q = f"Quelle est la valeur exacte de sin({rad[val]}) + cos({rad[val]})² ?"
+        res = round(math.sin(math.radians(val)) + (math.cos(math.radians(val))**2), 3)
+        corr = str(res)
+        options = [corr, "1", "1.5", "0.75"]
+    elif sub == "Analyse":
+        a = random.randint(2, 5)
+        q = f"Calculez la limite de ( {a}x² - 5x ) / ( x² + 1 ) quand x tend vers l'infini."
+        corr = str(a)
+        options = [corr, "0", "∞", "1"]
+    else: # Vecteurs 3D
+        q = "Dans un repère orthonormé, soit u(1, 2, -1) et v(2, -1, 0). Que vaut leur produit scalaire ?"
+        corr = "0" # 1*2 + 2*(-1) + (-1)*0 = 0
+        options = ["0", "1", "-1", "5"]
     return "Mathématiques", q, corr, options
 
-def get_physique():
-    sub = random.choice(["Optique", "Mécanique", "Électricité", "Thermodynamique"])
-    if sub == "Optique":
-        q = "Un rayon lumineux passe dell'air à l'eau (n_eau > n_air). Le rayon réfracté :"
-        corr = "Se rapproche de la normale"
-        options = [corr, "S'éloigne de la normale", "Ne dévie pas", "Est totalement réfléchi"]
-    elif sub == "Mécanique":
-        m = random.randint(1, 10)
-        v = random.randint(2, 6)
-        ec = 0.5 * m * (v**2)
-        q = f"Quelle est l'énergie cinétique d'un corps de {m}kg roulant à {v}m/s ?"
-        corr = f"{ec} J"
-        options = [corr, f"{m*v} J", f"{0.5*m*v} J", f"{m*(v**2)} J"]
-    else:
-        q = "Quelle est l'unité de mesure de la résistance électrique ?"
-        corr = "Ohm (Ω)"
-        options = [corr, "Volt (V)", "Ampère (A)", "Watt (W)"]
+def get_physique_expert():
+    sub = random.choice(["Cinématique", "Thermodynamique", "Optique"])
+    if sub == "Cinématique":
+        v0 = random.randint(10, 20)
+        t = 2
+        q = f"Un objet est lancé verticalement vers le haut avec v0 = {v0} m/s. Quelle est sa hauteur après {t}s ? (g ≈ 10 m/s²)"
+        # y = v0*t - 0.5*g*t^2
+        h = v0*t - 0.5*10*(t**2)
+        corr = f"{h} m"
+        options = [corr, f"{v0*t} m", f"{h+10} m", "5 m"]
+    elif sub == "Thermodynamique":
+        q = "Selon le deuxième principe de la thermodynamique, dans un système isolé, l'entropie :"
+        corr = "Ne peut que croître"
+        options = [corr, "Reste constante", "Diminue toujours", "S'annule au zéro absolu"]
+    else: # Optique / Snell-Descartes
+        q = "Un rayon passe du verre (n=1.5) à l'air (n=1). L'angle limite de réflexion totale est environ :"
+        corr = "42°"
+        options = ["42°", "30°", "60°", "90°"]
     return "Physique", q, corr, options
 
-def get_chimie():
-    sub = random.choice(["Stoechiométrie", "Organique", "Atomistique"])
-    if sub == "Stoechiométrie":
-        q = "Quelle est la masse molaire du glucose (C6H12O6) ? (C=12, H=1, O=16)"
-        corr = "180 g/mol"
-        options = [corr, "150 g/mol", "120 g/mol", "200 g/mol"]
+def get_chimie_expert():
+    sub = random.choice(["pH", "Thermochimie", "Organique"])
+    if sub == "pH":
+        c = random.choice([0.01, 0.001, 0.0001])
+        q = f"Quel est le pH d'une solution d'acide chlorhydrique (acide fort) de concentration {c} mol/L ?"
+        corr = str(int(-math.log10(c)))
+        options = [corr, str(int(-math.log10(c))+1), "7", "14"]
     elif sub == "Organique":
-        q = "Quel est le groupe fonctionnel caractéristique des alcools ?"
-        corr = "-OH"
-        options = [corr, "-CHO", "-COOH", "-NH2"]
+        q = "Quelle est la configuration d'un carbone lié à 4 groupements différents ?"
+        corr = "Chiral"
+        options = ["Chiral", "Achromatique", "Isomère plan", "Linéaire"]
     else:
-        q = "Combien d'électrons peut contenir au maximum la sous-couche 'p' ?"
-        corr = "6"
-        options = ["6", "2", "10", "14"]
+        q = "Dans une réaction exothermique, la variation d'enthalpie (ΔH) est :"
+        corr = "Négative (ΔH < 0)"
+        options = [corr, "Positive (ΔH > 0)", "Nulle", "Infinie"]
     return "Chimie", q, corr, options
 
-def get_biologie():
-    sub = random.choice(["Génétique", "Cytologie", "Physiologie"])
-    if sub == "Génétique":
-        q = "Si un individu est hétérozygote (Aa), quelle est la probabilité de transmettre l'allèle 'a' ?"
-        corr = "50%"
-        options = ["50%", "25%", "75%", "100%"]
-    elif sub == "Cytologie":
-        q = "Où se déroule la synthèse des protéines dans la cellule ?"
-        corr = "Les ribosomes"
-        options = [corr, "Le noyau", "L'appareil de Golgi", "Les lysosomes"]
+def get_biologie_expert():
+    sub = random.choice(["Biologie Moléculaire", "Immunologie", "Évolution"])
+    if sub == "Biologie Moléculaire":
+        q = "Quelle enzyme est responsable de l'ouverture de la double hélice d'ADN lors de la réplication ?"
+        corr = "Hélicase"
+        options = ["Hélicase", "ADN Polymérase", "Ligase", "Primase"]
+    elif sub == "Immunologie":
+        q = "Quelles cellules sont responsables de la production d'anticorps ?"
+        corr = "Plasmocytes (Lymphocytes B)"
+        options = [corr, "Lymphocytes T4", "Macrophages", "NK Cells"]
     else:
-        q = "Quelle hormone est responsable de la baisse du taux de glucose dans le sang ?"
-        corr = "Insuline"
-        options = [corr, "Glucagon", "Adrénaline", "Cortisol"]
+        q = "Quel organite possède son propre ADN circulaire, suggérant une origine endosymbiotique ?"
+        corr = "Mitochondrie"
+        options = ["Mitochondrie", "Appareil de Golgi", "Réticulum", "Lysosome"]
     return "Biologie", q, corr, options
 
-# --- MOTORE DELL'APP ---
+# --- MOTORE PRINCIPALE ---
 
+if 'current_q' not in st.session_state: st.session_state.current_q = None
 if 'score' not in st.session_state: st.session_state.score = 0
 if 'total' not in st.session_state: st.session_state.total = 0
-if 'current_q' not in st.session_state: st.session_state.current_q = None
 if 'answered' not in st.session_state: st.session_state.answered = False
 
-def next_question():
-    f = random.choice([get_math, get_physique, get_chimie, get_biologie])
-    cat, q, corr, opts = f()
-    random.shuffle(opts)
-    st.session_state.current_q = {"cat": cat, "q": q, "corr": corr, "opts": opts}
-    st.session_state.answered = False
+def get_unique_question():
+    attempts = 0
+    while attempts < 100: # Evita loop infiniti
+        f = random.choice([get_math_expert, get_physique_expert, get_chimie_expert, get_biologie_expert])
+        cat, q, corr, opts = f()
+        q_id = f"{cat}-{q}"
+        if q_id not in st.session_state.seen_questions:
+            st.session_state.seen_questions.add(q_id)
+            return cat, q, corr, opts
+        attempts += 1
+    # Se tutte sono state viste, resetta la memoria
+    st.session_state.seen_questions.clear()
+    return get_unique_question()
 
 if st.session_state.current_q is None:
-    next_question()
+    cat, q, corr, opts = get_unique_question()
+    random.shuffle(opts)
+    st.session_state.current_q = {"cat": cat, "q": q, "corr": corr, "opts": opts}
 
-# UI
-st.title("🚀 Master Prépa - Simulation Totale")
-st.sidebar.header("Statistiques")
-st.sidebar.metric("Score", f"{st.session_state.score} / {st.session_state.total}")
+# --- UI ---
+st.title("🏆 Concours Élite - Mode Expert")
+st.sidebar.metric("Précision", f"{st.session_state.score}/{st.session_state.total}")
+st.sidebar.write(f"Questions explorées : {len(st.session_state.seen_questions)}")
 
 curr = st.session_state.current_q
-st.subheader(f"Matière : {curr['cat']}")
+st.subheader(f"{curr['cat']}")
 st.markdown(f"**{curr['q']}**")
 
 for o in curr['opts']:
@@ -111,16 +125,12 @@ for o in curr['opts']:
         st.session_state.total += 1
         if o == curr['corr']:
             st.session_state.score += 1
-            st.success("Correct ! ✨")
+            st.success("Correct ! Excellent niveau. ✨")
         else:
-            st.error(f"Faux. La réponse était : {curr['corr']}")
+            st.error(f"Faux. La réponse experte était : {curr['corr']}")
 
 if st.session_state.answered:
     if st.button("Question Suivante ➡️"):
-        next_question()
+        st.session_state.current_q = None
+        st.session_state.answered = False
         st.rerun()
-
-if st.sidebar.button("Réinitialiser le score"):
-    st.session_state.score = 0
-    st.session_state.total = 0
-    st.rerun()
